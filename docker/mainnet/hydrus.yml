@@ -1,7 +1,7 @@
 # Test configuration file
 lightning:
   rpc:
-    address: localhost:10009
+    address: lnd:10009
     tls_cert_path: /home/lnd/.lnd/tls.cert
     macaroon_path: /home/lnd/.lnd/data/chain/bitcoin/mainnet/admin.macaroon
     timeout: 30s

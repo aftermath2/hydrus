@@ -14,8 +14,6 @@ trap stop SIGTERM
 
 cp /tmp/bitcoin.conf $BITCOIN_HOME/bitcoin.conf
 
-chown -R $USER_ID:$GROUP_ID /home/bitcoin
-
 bitcoind &
 
 if [ ! -f "$BITCOIN_HOME/regtest/wallets/wallet.dat" ]; then

@@ -6,7 +6,6 @@ services:
       context: ../../
     image: hydrus/hydrus
     container_name: hydrus
-    network_mode: service:tor
     restart: on-failure:3
     command: scores nodes
     volumes:
@@ -26,24 +25,10 @@ services:
         LND_VERSION: v0.19.3-beta
     image: hydrus/lnd-mainnet
     container_name: lnd
-    network_mode: service:tor
     restart: on-failure:3
     volumes:
       - ./volumes/lnd:/home/lnd/.lnd
-    volumes_from:
-      - tor:ro
     environment:
       AUTO_UNLOCK_PWD: ${AUTO_UNLOCK_PWD}
-    depends_on:
-      - tor
-
-  tor:
-    build: tor
-    image: hydrus/tor
-    container_name: tor
-    restart: always
-    volumes:
-      - ./volumes/tor/data:/var/lib/tor
-      - ./volumes/tor/config:/etc/tor
     ports:
       - 10009:10009

@@ -23,7 +23,7 @@ services:
     build:
       context: lnd
       args:
-        LND_VERSION: v0.18.5-beta
+        LND_VERSION: v0.19.3-beta
     image: hydrus/lnd-mainnet
     container_name: lnd
     network_mode: service:tor

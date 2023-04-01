@@ -46,7 +46,7 @@ services:
     build:
       context: lnd
       args:
-        LND_VERSION: v0.18.5-beta
+        LND_VERSION: v0.19.3-beta
     image: hydrus/lnd-regtest
     container_name: alice
     hostname: alice

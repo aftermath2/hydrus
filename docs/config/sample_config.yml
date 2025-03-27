@@ -1,0 +1,54 @@
+# Sample configuration file
+lightning:
+  rpc:
+    address: localhost:10009
+    tls_cert_path: /etc/hydrus/tls.cert
+    macaroon_path: /etc/hydrus/admin.macaroon
+    timeout: 30s
+logging:
+  level: info
+agent:
+  dry_run: false
+  blocklist:
+    - pub_key1
+    - pub_key2
+  keeplist:
+    - pub_key3
+    - pub_key4
+  allocation_percent: 50
+  target_conf: 6
+  min_batch_size: 3
+  min_channels: 20
+  max_channels: 100
+  min_channel_size: 500000
+  max_channel_size: 15000000
+  allow_force_closes: false
+  channel_manager:
+    max_sat_vb: 20
+    min_conf: 2
+    base_fee_msat: 0
+    fee_rate_ppm: 200
+  heuristic_weights:
+    open:
+      # Use 0 to disable the heuristic
+      capacity: 0.75
+      features: 0.67
+      hybrid: 1
+      degree_centrality: 0.5
+      closeness_centrality: 1
+      betweenness_centrality: 1
+      eigenvector_centrality: 1
+      base_fee: 0.8
+      fee_rate: 0.6
+      inbound_base_fee: 0.8
+      inbound_fee_rate: 0.6
+      min_htlc: 0.62
+      max_htlc: 0.81
+    close:
+      capacity: 0.9
+      active: 1
+      num_forwards: 1
+      forwards_amount: 1
+      fees: 1
+      ping_time: 0.22
+      age: 0.65

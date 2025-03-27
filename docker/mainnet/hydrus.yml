@@ -1,0 +1,47 @@
+# Test configuration file
+lightning:
+  rpc:
+    address: localhost:10009
+    tls_cert_path: /home/lnd/.lnd/tls.cert
+    macaroon_path: /home/lnd/.lnd/data/chain/bitcoin/mainnet/admin.macaroon
+    timeout: 30s
+logging:
+  level: trace
+agent:
+  dry_run: true
+  allocation_percent: 80
+  min_batch_size: 10
+  target_conf: 6
+  min_channels: 3
+  max_channels: 50
+  min_channel_size: 1000000
+  max_channel_size: 5000000
+  allow_force_closes: false
+  channel_manager:
+    max_sat_vb: 20
+    min_conf: 1
+    base_fee_msat: 1
+    fee_rate_ppm: 100
+  heuristic_weights:
+    open:
+      capacity: 1
+      features: 0.6
+      hybrid: 1
+      degree_centrality: 0.4
+      closeness_centrality: 1
+      betweenness_centrality: 1
+      eigenvector_centrality: 1
+      base_fee: 0.8
+      fee_rate: 0.8
+      inbound_base_fee: 0.8
+      inbound_fee_rate: 0.8
+      min_htlc: 1
+      max_htlc: 0.5
+    close:
+      capacity: 0.9
+      active: 1
+      num_forwards: 1
+      forwards_amount: 1
+      fees: 1
+      ping_time: 0.4
+      age: 0.6

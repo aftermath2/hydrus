@@ -1,0 +1,5 @@
+lightning:
+  rpc:
+    address: localhost:10009
+    tls_cert_path: /etc/hydrus/tls.cert
+    macaroon_path: /etc/hydrus/admin.macaroon

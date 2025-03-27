@@ -1,0 +1,188 @@
+name: hydrus-regtest
+
+services:
+  hydrus:
+    build:
+      context: ../../
+    image: hydrus/hydrus
+    container_name: hydrus
+    hostname: hydrus
+    restart: on-failure:5
+    volumes:
+      - ./hydrus.yml:/etc/hydrus/hydrus.yml
+    volumes_from:
+      - alice:ro
+    networks:
+      p2p:
+    environment:
+      HYDRUS_CONFIG: /etc/hydrus/hydrus.yml
+    depends_on:
+      - alice
+
+  bitcoind:
+    build:
+      context: bitcoind
+      args:
+        BITCOIN_VERSION: "28.0"
+    image: hydrus/bitcoind-regtest
+    container_name: bitcoind
+    hostname: bitcoind
+    restart: on-failure:3
+    stop_grace_period: 2m
+    volumes:
+      - ./volumes/bitcoind:/home/bitcoin/.bitcoin
+    networks:
+      p2p:
+        ipv4_address: 172.18.0.2
+    ports:
+      - 18443:18443 # RPC
+      - 18444:18444 # P2P
+      - 28334:28334 # ZMQ block
+      - 28335:28335 # ZMQ tx
+
+  alice:
+    build:
+      context: lnd
+      args:
+        LND_VERSION: v0.18.5-beta
+    image: hydrus/lnd-regtest
+    container_name: alice
+    hostname: alice
+    restart: on-failure:3
+    stop_grace_period: 30s
+    volumes:
+      - ./volumes/lnd/alice:/home/lnd/.lnd
+    networks:
+      p2p:
+        ipv4_address: 172.18.0.3
+    ports:
+      - 10001:10009 # RPC
+      - 9735:9735 # P2P
+    depends_on:
+      - bitcoind
+  
+  bob:
+    image: hydrus/lnd-regtest
+    container_name: bob
+    hostname: bob
+    restart: on-failure:3
+    stop_grace_period: 30s
+    volumes:
+      - ./volumes/lnd/bob:/home/lnd/.lnd
+    networks:
+      p2p:
+        ipv4_address: 172.18.0.4
+    ports:
+      - 10002:10009
+      - 9736:9735
+    depends_on:
+      - bitcoind
+  
+  carol:
+    image: hydrus/lnd-regtest
+    container_name: carol
+    hostname: carol
+    restart: on-failure:3
+    stop_grace_period: 30s
+    volumes:
+      - ./volumes/lnd/carol:/home/lnd/.lnd
+    networks:
+      p2p:
+        ipv4_address: 172.18.0.5
+    ports:
+      - 10003:10009
+      - 9737:9735
+    depends_on:
+      - bitcoind
+
+  dave:
+    image: hydrus/lnd-regtest
+    container_name: dave
+    hostname: dave
+    restart: on-failure:3
+    stop_grace_period: 30s
+    volumes:
+      - ./volumes/lnd/dave:/home/lnd/.lnd
+    networks:
+      p2p:
+        ipv4_address: 172.18.0.6
+    ports:
+      - 10004:10009
+      - 9738:9735
+    depends_on:
+      - bitcoind
+
+  erin:
+    image: hydrus/lnd-regtest
+    container_name: erin
+    hostname: erin
+    restart: on-failure:3
+    stop_grace_period: 30s
+    volumes:
+      - ./volumes/lnd/erin:/home/lnd/.lnd
+    networks:
+      p2p:
+        ipv4_address: 172.18.0.7
+    ports:
+      - 10005:10009
+      - 9739:9735
+    depends_on:
+      - bitcoind
+  
+  frank:
+    image: hydrus/lnd-regtest
+    container_name: frank
+    hostname: frank
+    restart: on-failure:3
+    stop_grace_period: 30s
+    volumes:
+      - ./volumes/lnd/george:/home/lnd/.lnd
+    networks:
+      p2p:
+        ipv4_address: 172.18.0.8
+    ports:
+      - 10006:10009
+      - 9740:9735
+    depends_on:
+      - bitcoind
+  
+  george:
+    image: hydrus/lnd-regtest
+    container_name: george
+    hostname: george
+    restart: on-failure:3
+    stop_grace_period: 30s
+    volumes:
+      - ./volumes/lnd/dave:/home/lnd/.lnd
+    networks:
+      p2p:
+        ipv4_address: 172.18.0.9
+    ports:
+      - 10007:10009
+      - 9741:9735
+    depends_on:
+      - bitcoind
+  
+  harold:
+    image: hydrus/lnd-regtest
+    container_name: harold
+    hostname: harold
+    restart: on-failure:3
+    stop_grace_period: 30s
+    volumes:
+      - ./volumes/lnd/harold:/home/lnd/.lnd
+    networks:
+      p2p:
+        ipv4_address: 172.18.0.10
+    ports:
+      - 10008:10009
+      - 9742:9735
+    depends_on:
+      - bitcoind
+
+networks:
+  p2p:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/24

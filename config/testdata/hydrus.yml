@@ -1,0 +1,7 @@
+lightning:
+  rpc:
+    address: localhost:10009
+    tls_cert_path: ./testdata/tls.cert
+    macaroon_path: ./testdata/invoice.macaroon
+agent:
+  dry_run: true

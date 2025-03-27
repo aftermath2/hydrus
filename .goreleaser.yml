@@ -1,0 +1,35 @@
+project_name: hydrus
+before:
+  hooks:
+    - go mod download
+    - go mod tidy
+builds:
+  -
+    ldflags: -s -w -X main.version={{.Version}}
+    env:
+        - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch: 
+      - 386
+      - amd64
+      - arm
+      - arm64
+archives:
+  -
+    name_template: '{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}-{{ .Tag }}'
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+checksum:
+  name_template: checksums.txt
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - 'typo'

@@ -1,6 +1,6 @@
 ## Hydrus
 
-Lightning automated liquidity management agent. Enjoy self-custodial lightning without worrying about channels.
+Lightning liquidity management agent. Enjoy self-custodial lightning without worrying about channels.
 
 ### Getting started
 

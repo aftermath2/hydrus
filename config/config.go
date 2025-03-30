@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -19,13 +18,15 @@ import (
 var (
 	// DefaultOpenWeights contains the default values for the channel opening heuristic weights.
 	DefaultOpenWeights = OpenWeights{
-		Capacity:              1,
-		Features:              1,
-		Hybrid:                0.8,
-		DegreeCentrality:      0.4,
-		BetweennessCentrality: 0.8,
-		EigenvectorCentrality: 0.5,
-		ClosenessCentrality:   0.8,
+		Capacity: 1,
+		Features: 1,
+		Hybrid:   0.8,
+		Centrality: CentralityWeights{
+			Degree:      0.4,
+			Betweenness: 0.8,
+			Eigenvector: 0.5,
+			Closeness:   0.8,
+		},
 		Channels: ChannelsWeights{
 			BaseFee:        1,
 			FeeRate:        0.7,
@@ -102,17 +103,22 @@ type CloseWeights struct {
 
 // OpenWeights configuration.
 type OpenWeights struct {
-	Capacity              float64         `yaml:"capacity"`
-	Features              float64         `yaml:"features"`
-	Hybrid                float64         `yaml:"hybrid"`
-	DegreeCentrality      float64         `yaml:"degree_centrality"`
-	BetweennessCentrality float64         `yaml:"betweenness_centrality"`
-	EigenvectorCentrality float64         `yaml:"eigenvector_centrality"`
-	ClosenessCentrality   float64         `yaml:"closeness_centrality"`
-	Channels              ChannelsWeights `yaml:"channels"`
+	Capacity   float64           `yaml:"capacity"`
+	Features   float64           `yaml:"features"`
+	Hybrid     float64           `yaml:"hybrid"`
+	Centrality CentralityWeights `yaml:"centrality"`
+	Channels   ChannelsWeights   `yaml:"channels"`
 }
 
-// ChannelsWeights open weight configuration.
+// CentralityWeights configuration.
+type CentralityWeights struct {
+	Degree      float64 `yaml:"degree"`
+	Betweenness float64 `yaml:"betweenness"`
+	Eigenvector float64 `yaml:"eigenvector"`
+	Closeness   float64 `yaml:"closeness"`
+}
+
+// ChannelsWeights configuration.
 type ChannelsWeights struct {
 	BaseFee        float64 `yaml:"base_fee"`
 	FeeRate        float64 `yaml:"fee_rate"`
@@ -310,7 +316,7 @@ func (c *Config) setDefaults() {
 
 // Weights is a set of different heuristic weights.
 type Weights interface {
-	CloseWeights | OpenWeights | ChannelsWeights
+	CloseWeights | OpenWeights | CentralityWeights | ChannelsWeights
 }
 
 // IterWeights iterates through the weights executing f on each of the values.
@@ -322,6 +328,10 @@ func IterWeights[T Weights](weights T, f func(weight float64) error) error {
 		switch weight.(type) {
 		case float64:
 			err = f(weight.(float64))
+		case CentralityWeights:
+			err = IterWeights(weight.(CentralityWeights), func(v float64) error {
+				return f(v)
+			})
 		case ChannelsWeights:
 			err = IterWeights(weight.(ChannelsWeights), func(v float64) error {
 				return f(v)
@@ -339,7 +349,6 @@ func IterWeights[T Weights](weights T, f func(weight float64) error) error {
 func SumWeights[T Weights](weights T) float64 {
 	sum := 0.0
 	IterWeights(weights, func(weight float64) error {
-		fmt.Println(weight)
 		sum += weight
 		return nil
 	})

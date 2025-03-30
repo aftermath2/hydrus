@@ -189,13 +189,15 @@ func TestSumWeightsClose(t *testing.T) {
 
 func TestSumWeightsOpen(t *testing.T) {
 	openWeights := OpenWeights{
-		Capacity:              0.7,
-		Features:              0.5,
-		Hybrid:                1,
-		DegreeCentrality:      1,
-		BetweennessCentrality: 1,
-		EigenvectorCentrality: 1,
-		ClosenessCentrality:   1,
+		Capacity: 0.7,
+		Features: 0.5,
+		Hybrid:   1,
+		Centrality: CentralityWeights{
+			Degree:      1,
+			Betweenness: 1,
+			Eigenvector: 1,
+			Closeness:   1,
+		},
 		Channels: ChannelsWeights{
 			BaseFee:        0.8,
 			FeeRate:        1,

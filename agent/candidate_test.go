@@ -174,13 +174,15 @@ func TestGetCandidateNodes(t *testing.T) {
 			},
 			graph: graph.Graph{
 				Heuristics: *graph.NewHeuristics(config.OpenWeights{
-					Capacity:              0,
-					Features:              0,
-					Hybrid:                0,
-					DegreeCentrality:      0,
-					BetweennessCentrality: 0,
-					EigenvectorCentrality: 0,
-					ClosenessCentrality:   0,
+					Capacity: 0,
+					Features: 0,
+					Hybrid:   0,
+					Centrality: config.CentralityWeights{
+						Degree:      0,
+						Betweenness: 0,
+						Eigenvector: 0,
+						Closeness:   0,
+					},
 					Channels: config.ChannelsWeights{
 						BaseFee:        0,
 						FeeRate:        1,

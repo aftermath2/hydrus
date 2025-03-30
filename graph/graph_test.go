@@ -71,13 +71,15 @@ func TestNew(t *testing.T) {
 			},
 		},
 		Heuristics: graph.Heuristics{
-			Capacity:              heuristic.NewFull[uint64](1_000_000, 1_000_000, config.DefaultOpenWeights.Capacity, false),
-			Features:              heuristic.NewFull(0, 1, config.DefaultOpenWeights.Features, false),
-			Hybrid:                heuristic.NewFull(0, 1, config.DefaultOpenWeights.Hybrid, false),
-			DegreeCentrality:      heuristic.NewFull[float64](1, 1, config.DefaultOpenWeights.DegreeCentrality, false),
-			BetweennessCentrality: heuristic.NewFull[float64](0, 0, config.DefaultOpenWeights.BetweennessCentrality, false),
-			EigenvectorCentrality: heuristic.NewFull[uint64](1, 1, config.DefaultOpenWeights.EigenvectorCentrality, false),
-			ClosenessCentrality:   heuristic.NewFull[float64](1, 1, config.DefaultOpenWeights.ClosenessCentrality, false),
+			Capacity: heuristic.NewFull[uint64](1_000_000, 1_000_000, config.DefaultOpenWeights.Capacity, false),
+			Features: heuristic.NewFull(0, 1, config.DefaultOpenWeights.Features, false),
+			Hybrid:   heuristic.NewFull(0, 1, config.DefaultOpenWeights.Hybrid, false),
+			Centrality: &graph.CentralityHeuristics{
+				Degree:      heuristic.NewFull[float64](1, 1, config.DefaultOpenWeights.Centrality.Degree, false),
+				Betweenness: heuristic.NewFull[float64](0, 0, config.DefaultOpenWeights.Centrality.Betweenness, false),
+				Eigenvector: heuristic.NewFull[uint64](1, 1, config.DefaultOpenWeights.Centrality.Eigenvector, false),
+				Closeness:   heuristic.NewFull[float64](1, 1, config.DefaultOpenWeights.Centrality.Closeness, false),
+			},
 			Channels: &graph.Channels{
 				BaseFee:        heuristic.NewFull[uint64](0, 1000, config.DefaultOpenWeights.Channels.BaseFee, true),
 				FeeRate:        heuristic.NewFull[uint64](100, 300, config.DefaultOpenWeights.Channels.FeeRate, true),

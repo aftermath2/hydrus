@@ -27,10 +27,11 @@ agent:
       capacity: 1
       features: 0.6
       hybrid: 1
-      degree_centrality: 0.4
-      closeness_centrality: 1
-      betweenness_centrality: 1
-      eigenvector_centrality: 1
+      centrality:
+        degree: 0.4
+        closeness: 1
+        betweenness: 1
+        eigenvector: 1
       channels:
         base_fee: 0.8
         fee_rate: 0.8

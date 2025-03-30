@@ -83,10 +83,10 @@ lncli bakemacaroon --save_to hydrus.macaroon \
 | `agent.heuristic_weights.open.capacity` | Nodes capacity weight |
 | `agent.heuristic_weights.open.features` | Nodes features weight |
 | `agent.heuristic_weights.open.hybrid` | Weight for nodes addresses types |
-| `agent.heuristic_weights.open.degree_centrality` | Weight for the degree centrality of the node in the network |
-| `agent.heuristic_weights.open.closeness_centrality` | Weight for the closeness centrality of the node |
-| `agent.heuristic_weights.open.betweenness_centrality` | Weight for the betweenness centrality of the node |
-| `agent.heuristic_weights.open.eigenvector_centrality` | Weight for the eigenvector centrality of the node |
+| `agent.heuristic_weights.open.centrality.degree` | Weight for the degree centrality of the node in the network |
+| `agent.heuristic_weights.open.centrality.closeness` | Weight for the closeness centrality of the node |
+| `agent.heuristic_weights.open.centrality.betweenness` | Weight for the betweenness centrality of the node |
+| `agent.heuristic_weights.open.centrality.eigenvector` | Weight for the eigenvector centrality of the node |
 | `agent.heuristic_weights.open.channels.base_fee` | Channels base fees weight |
 | `agent.heuristic_weights.open.channels.fee_rate` | Channels fee rate weight |
 | `agent.heuristic_weights.open.channels.inbound_base_fee` | Inbound base fee weight |

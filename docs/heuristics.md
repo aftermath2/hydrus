@@ -27,10 +27,10 @@ Default weights are located at [config.go](../config/config.go).
 | capacity | 1 |
 | features | 1 |
 | hybrid | 0.8 |
-| degree_centrality | 0.4 |
-| betweenness_centrality | 0.8 |
-| eigenvector_centrality | 0.5 |
-| closeness_centrality | 0.8 |
+| centrality.degree | 0.4 |
+| centrality.betweenness | 0.8 |
+| centrality.eigenvector | 0.5 |
+| centrality.closeness | 0.8 |
 | channels.base_fee | 1 |
 | channels.fee_rate | 0.7 |
 | channels.inbound_base_fee | 0.8 |

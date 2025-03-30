@@ -27,6 +27,7 @@ var (
 		InboundFeeRate:        0.7,
 		MinHTLC:               1,
 		MaxHTLC:               0.6,
+		BlockHeight:           0.8,
 		DegreeCentrality:      0.4,
 		BetweennessCentrality: 0.8,
 		EigenvectorCentrality: 0.5,
@@ -107,6 +108,7 @@ type OpenWeights struct {
 	InboundFeeRate        float64 `yaml:"inbound_fee_rate"`
 	MinHTLC               float64 `yaml:"min_htlc"`
 	MaxHTLC               float64 `yaml:"max_htlc"`
+	BlockHeight           float64 `yaml:"block_height"`
 	DegreeCentrality      float64 `yaml:"degree_centrality"`
 	BetweennessCentrality float64 `yaml:"betweenness_centrality"`
 	EigenvectorCentrality float64 `yaml:"eigenvector_centrality"`

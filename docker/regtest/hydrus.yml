@@ -39,3 +39,4 @@ agent:
       inbound_fee_rate: 0.6
       min_htlc: 0.6
       max_htlc: 0.8
+      block_height: 1

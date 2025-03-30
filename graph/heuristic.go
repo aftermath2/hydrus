@@ -20,6 +20,7 @@ type Heuristics struct {
 	InboundFeeRate        *heuristic.Heuristic[int64]   `json:"inbound_fee_rate,omitempty"`
 	MinHTLC               *heuristic.Heuristic[uint64]  `json:"min_htlc,omitempty"`
 	MaxHTLC               *heuristic.Heuristic[uint64]  `json:"max_htlc,omitempty"`
+	BlockHeight           *heuristic.Heuristic[uint64]  `json:"block_height,omitempty"`
 	DegreeCentrality      *heuristic.Heuristic[float64] `json:"degree_centrality,omitempty"`
 	BetweennessCentrality *heuristic.Heuristic[float64] `json:"betweenness_centrality,omitempty"`
 	EigenvectorCentrality *heuristic.Heuristic[uint64]  `json:"eigenvector_centrality,omitempty"`
@@ -42,6 +43,7 @@ func NewHeuristics(weight config.OpenWeights) *Heuristics {
 		InboundFeeRate:        heuristic.New[int64](weight.InboundFeeRate, true),
 		MinHTLC:               heuristic.New[uint64](weight.MinHTLC, true),
 		MaxHTLC:               heuristic.New[uint64](weight.MaxHTLC, false),
+		BlockHeight:           heuristic.New[uint64](weight.BlockHeight, true),
 	}
 }
 
@@ -69,6 +71,7 @@ func (h *Heuristics) GetScore(node Node) float64 {
 		chanScore += h.InboundFeeRate.GetScore(channel.InboundFeeRate)
 		chanScore += h.MinHTLC.GetScore(channel.MinHTLC)
 		chanScore += h.MaxHTLC.GetScore(channel.MaxHTLC)
+		chanScore += h.BlockHeight.GetScore(channel.BlockHeight)
 	}
 
 	// Get the node's channels score mean value
@@ -94,6 +97,7 @@ func (h *Heuristics) Update(node Node) {
 		h.InboundFeeRate.Update(channel.InboundFeeRate)
 		h.MinHTLC.Update(channel.MinHTLC)
 		h.MaxHTLC.Update(channel.MaxHTLC)
+		h.BlockHeight.Update(channel.BlockHeight)
 	}
 }
 

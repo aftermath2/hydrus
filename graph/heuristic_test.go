@@ -61,7 +61,7 @@ func TestHeuristicsGetScore(t *testing.T) {
 				},
 				NumFeatures: 12,
 			},
-			expectedScore: 7.4,
+			expectedScore: 8.2,
 		},
 		{
 			desc:       "Default values 2",
@@ -87,7 +87,7 @@ func TestHeuristicsGetScore(t *testing.T) {
 				},
 				NumFeatures: 12,
 			},
-			expectedScore: 6,
+			expectedScore: 6.8,
 		},
 		{
 			desc: "Full weights",

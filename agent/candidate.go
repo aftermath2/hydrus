@@ -99,7 +99,7 @@ func discardNode(localNode local.Node, peerNode graph.Node, blocklist []string) 
 
 		if closedChannel.CloseType == lnrpc.ChannelCloseSummary_FUNDING_CANCELED &&
 			closedChannel.OpenInitiator == lnrpc.Initiator_INITIATOR_LOCAL &&
-			int32(local.GetChannelBlockHeight(closedChannel.ChanId)) > threeMonthsAgo {
+			int32(graph.GetChannelBlockHeight(closedChannel.ChanId)) > threeMonthsAgo {
 			return fmt.Errorf("we failed opening a channel with this peer within the last %d blocks", threeMonthsInBlocks)
 		}
 	}

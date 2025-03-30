@@ -36,12 +36,12 @@ func TestGetCandidateNodes(t *testing.T) {
 				{
 					PublicKey: "bob",
 					Addresses: []string{},
-					Score:     6.367,
+					Score:     7.167,
 				},
 				{
 					PublicKey: "dave",
 					Addresses: []string{},
-					Score:     6.2,
+					Score:     7,
 				},
 			},
 			localNode: local.Node{

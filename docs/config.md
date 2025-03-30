@@ -93,6 +93,7 @@ lncli bakemacaroon --save_to hydrus.macaroon \
 | `agent.heuristic_weights.open.inbound_fee_rate` | Inbound fee rate weight |
 | `agent.heuristic_weights.open.min_htlc` | Minimum HTLC value weight |
 | `agent.heuristic_weights.open.max_htlc` | Maximum HTLC value allowed weight |
+| `agent.heuristic_weights.open.block_height` | Channels block height (age) weight |
 
 ##### Close
 

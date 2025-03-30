@@ -355,12 +355,13 @@ func TestSumWeightsOpen(t *testing.T) {
 		InboundFeeRate:        0.4,
 		MinHTLC:               1,
 		MaxHTLC:               0.5,
+		BlockHeight:           0.7,
 		DegreeCentrality:      1,
 		BetweennessCentrality: 1,
 		EigenvectorCentrality: 1,
 		ClosenessCentrality:   1,
 	}
-	expected := 10.3
+	expected := 11.0
 
 	actual := SumWeights(openWeights)
 

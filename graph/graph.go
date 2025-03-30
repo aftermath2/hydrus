@@ -2,6 +2,8 @@ package graph
 
 import (
 	"context"
+	"encoding/binary"
+	"math/big"
 
 	"github.com/aftermath2/hydrus/config"
 	"github.com/aftermath2/hydrus/lightning"
@@ -34,6 +36,7 @@ type Channel struct {
 	Point          string
 	PeerPublicKey  string
 	ID             uint64
+	BlockHeight    uint64
 	Capacity       uint64
 	BaseFee        uint64
 	FeeRate        uint64
@@ -73,12 +76,14 @@ func New(ctx context.Context, openWeights config.OpenWeights, lnd lightning.Clie
 			continue
 		}
 
+		blockHeight := GetChannelBlockHeight(edge.ChannelId)
+
 		if !discardChannel(edge.Node1Policy) {
-			channels[edge.Node1Pub] = append(channels[edge.Node1Pub], getNode1Channel(edge))
+			channels[edge.Node1Pub] = append(channels[edge.Node1Pub], getNode1Channel(edge, blockHeight))
 		}
 
 		if !discardChannel(edge.Node2Policy) {
-			channels[edge.Node2Pub] = append(channels[edge.Node2Pub], getNode2Channel(edge))
+			channels[edge.Node2Pub] = append(channels[edge.Node2Pub], getNode2Channel(edge, blockHeight))
 		}
 	}
 
@@ -162,9 +167,10 @@ func GetAddresses(addresses []*lnrpc.NodeAddress) []string {
 	return addrs
 }
 
-func getNode1Channel(edge *lnrpc.ChannelEdge) Channel {
+func getNode1Channel(edge *lnrpc.ChannelEdge, blockHeight uint32) Channel {
 	return Channel{
 		ID:             edge.ChannelId,
+		BlockHeight:    uint64(blockHeight),
 		Point:          edge.ChanPoint,
 		PeerPublicKey:  edge.Node2Pub,
 		Capacity:       uint64(edge.Capacity),
@@ -177,9 +183,10 @@ func getNode1Channel(edge *lnrpc.ChannelEdge) Channel {
 	}
 }
 
-func getNode2Channel(edge *lnrpc.ChannelEdge) Channel {
+func getNode2Channel(edge *lnrpc.ChannelEdge, blockHeight uint32) Channel {
 	return Channel{
 		ID:             edge.ChannelId,
+		BlockHeight:    uint64(blockHeight),
 		Point:          edge.ChanPoint,
 		PeerPublicKey:  edge.Node1Pub,
 		Capacity:       uint64(edge.Capacity),
@@ -212,4 +219,13 @@ func discardChannel(routingPolicy *lnrpc.RoutingPolicy) bool {
 		routingPolicy.Disabled ||
 		routingPolicy.FeeRateMilliMsat > 20_000 ||
 		routingPolicy.FeeBaseMsat > 100_000
+}
+
+// GetChannelBlockHeight returns the block height at which a channel has been established based on its ID.
+func GetChannelBlockHeight(channelID uint64) uint32 {
+	idBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(idBytes, channelID)
+
+	blockHeight := new(big.Int).SetBytes(idBytes[0:3]).Uint64()
+	return uint32(blockHeight)
 }

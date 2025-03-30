@@ -152,7 +152,7 @@ func TestIterWeights(t *testing.T) {
 		NumForwards:    0.5,
 		ForwardsAmount: 1,
 		Fees:           0.5,
-		Age:            1,
+		BlockHeight:    1,
 		PingTime:       0.5,
 		FlapCount:      0,
 	}
@@ -176,7 +176,7 @@ func TestSumWeightsClose(t *testing.T) {
 		NumForwards:    0.5,
 		ForwardsAmount: 1,
 		Fees:           0.5,
-		Age:            1,
+		BlockHeight:    1,
 		PingTime:       0.5,
 		FlapCount:      0,
 	}

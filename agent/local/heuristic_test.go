@@ -12,7 +12,7 @@ import (
 func TestHeuristicsGetScore(t *testing.T) {
 	channel := local.Channel{
 		Active:         true,
-		Age:            200,
+		BlockHeight:    200,
 		Capacity:       500_000,
 		NumForwards:    14,
 		ForwardsAmount: 2_000,
@@ -33,7 +33,7 @@ func TestHeuristicsGetScore(t *testing.T) {
 			channel: local.Channel{
 				Active:         true,
 				Capacity:       1_000_000,
-				Age:            50,
+				BlockHeight:    50,
 				NumForwards:    25,
 				ForwardsAmount: 25_000,
 				Fees:           1_500,
@@ -48,7 +48,7 @@ func TestHeuristicsGetScore(t *testing.T) {
 			channel: local.Channel{
 				Active:         false,
 				Capacity:       1_000_000,
-				Age:            250,
+				BlockHeight:    250,
 				NumForwards:    5,
 				ForwardsAmount: 200,
 				Fees:           15,
@@ -62,7 +62,7 @@ func TestHeuristicsGetScore(t *testing.T) {
 			heuristics: local.NewHeuristics(config.CloseWeights{
 				Capacity:       1,
 				Active:         1,
-				Age:            1,
+				BlockHeight:    1,
 				NumForwards:    1,
 				ForwardsAmount: 1,
 				Fees:           1,
@@ -72,7 +72,7 @@ func TestHeuristicsGetScore(t *testing.T) {
 			channel: local.Channel{
 				Active:         true,
 				Capacity:       2_000_000,
-				Age:            250,
+				BlockHeight:    250,
 				NumForwards:    32,
 				ForwardsAmount: 5_000,
 				Fees:           500,
@@ -103,7 +103,7 @@ func TestHeuristicsUpdate(t *testing.T) {
 		ForwardsAmount: 0.4,
 		Fees:           0.1,
 		PingTime:       0.8,
-		Age:            0.9,
+		BlockHeight:    0.9,
 	}
 	channel := local.Channel{
 		Capacity:       100,
@@ -111,7 +111,7 @@ func TestHeuristicsUpdate(t *testing.T) {
 		ForwardsAmount: 200,
 		Fees:           30,
 		PingTime:       700,
-		Age:            800,
+		BlockHeight:    800,
 		Active:         true,
 	}
 
@@ -124,7 +124,7 @@ func TestHeuristicsUpdate(t *testing.T) {
 	assert.Equal(t, result*config.ForwardsAmount, h.ForwardsAmount.GetScore(channel.ForwardsAmount))
 	assert.Equal(t, result*config.Fees, h.Fees.GetScore(channel.Fees))
 	assert.Equal(t, result*config.PingTime, h.PingTime.GetScore(uint64(channel.PingTime)))
-	assert.Equal(t, result*config.Age, h.Age.GetScore(uint64(channel.Age)))
+	assert.Equal(t, result*config.BlockHeight, h.BlockHeight.GetScore(uint64(channel.BlockHeight)))
 	assert.Equal(t, result*config.Active, h.Active.GetScore(1))
 }
 

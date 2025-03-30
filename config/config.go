@@ -45,7 +45,7 @@ var (
 		ForwardsAmount: 1,
 		Fees:           1,
 		PingTime:       0.4,
-		Age:            0.6,
+		BlockHeight:    0.6,
 		FlapCount:      0.2,
 	}
 )
@@ -95,7 +95,7 @@ type CloseWeights struct {
 	NumForwards    float64 `yaml:"num_forwards"`
 	ForwardsAmount float64 `yaml:"forwards_amount"`
 	Fees           float64 `yaml:"fees"`
-	Age            float64 `yaml:"age"`
+	BlockHeight    float64 `yaml:"block_height"`
 	PingTime       float64 `yaml:"ping_time"`
 	FlapCount      float64 `yaml:"flap_count"`
 }

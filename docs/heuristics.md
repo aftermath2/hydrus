@@ -49,5 +49,5 @@ Default weights are located at [config.go](../config/config.go).
 | forwards_amount | 1 |
 | fees | 1 |
 | ping_time | 0.4 |
-| age | 0.6 |
+| block_height | 0.6 |
 | flap_count | 0.2 |

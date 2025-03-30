@@ -53,4 +53,4 @@ agent:
       forwards_amount: 1
       fees: 1
       ping_time: 0.22
-      age: 0.65
+      block_height: 0.65

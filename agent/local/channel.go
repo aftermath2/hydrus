@@ -28,7 +28,7 @@ type Channel struct {
 	ID              uint64 `json:"id,omitempty"`
 	Point           string `json:"point,omitempty"`
 	Active          bool   `json:"active,omitempty"`
-	Age             uint32 `json:"age,omitempty"`
+	BlockHeight     uint32 `json:"block_height,omitempty"`
 	RemotePublicKey string `json:"remote_public_key,omitempty"`
 	Capacity        uint64 `json:"capacity,omitempty"`
 	NumForwards     uint64 `json:"num_forwards,omitempty"`
@@ -65,9 +65,9 @@ func getChannels(
 
 		channel := Channel{
 			ID:              channel.ChanId,
+			BlockHeight:     graph.GetChannelBlockHeight(channel.ChanId),
 			Point:           channel.ChannelPoint,
 			Active:          channel.Active,
-			Age:             graph.GetChannelBlockHeight(channel.ChanId),
 			Capacity:        uint64(channel.Capacity),
 			NumForwards:     numForwards,
 			ForwardsAmount:  forwardsAmount,

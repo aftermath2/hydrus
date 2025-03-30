@@ -71,7 +71,7 @@ To close channels, Hydrus analyzes the heuristics of every local channel and pic
 - **Forwards amount**: Bitcoin amount routed through the channel.
 - **Fees**: Fees collected by the channel.
 - **Ping time**: Time to reach the peer node.
-- **Age**: Number of blocks elapsed since the opening transaction, older channels are preferred.
+- **Block height**: Opening transaction block height, older channels are preferred.
 - **Flap count**: Number of times we lost connection with the peer.
 
 It will only close channels if the number of them is higher than `agent.min_channels` and if their score is lower than 0.3 in a scale of 0 to 1.

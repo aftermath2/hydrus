@@ -93,7 +93,7 @@ lncli bakemacaroon --save_to hydrus.macaroon \
 | `agent.heuristic_weights.open.channels.inbound_fee_rate` | Inbound fee rate weight |
 | `agent.heuristic_weights.open.channels.min_htlc` | Minimum HTLC value weight |
 | `agent.heuristic_weights.open.channels.max_htlc` | Maximum HTLC value allowed weight |
-| `agent.heuristic_weights.open.channels.block_height` | Channels block height (age) weight |
+| `agent.heuristic_weights.open.channels.block_height` | Channels block height weight |
 
 ##### Close
 
@@ -101,9 +101,9 @@ lncli bakemacaroon --save_to hydrus.macaroon \
 |------|-------------|
 | `agent.heuristic_weights.close.capacity` | Channel capacity |
 | `agent.heuristic_weights.close.active` | Channel status |
-| `agent.heuristic_weights.close.num_forwards` | Number of forwards weight for channel closures |
-| `agent.heuristic_weights.close.forwards_amount` | Total amount forwarded weight for channel closures |
-| `agent.heuristic_weights.close.fees` | Fees collected weight for channel closures |
-| `agent.heuristic_weights.close.age` | Age of the channel when considering closure |
+| `agent.heuristic_weights.close.num_forwards` | Number of forwards weight |
+| `agent.heuristic_weights.close.forwards_amount` | Total amount forwarded weight |
+| `agent.heuristic_weights.close.fees` | Fees collected weight |
+| `agent.heuristic_weights.close.block_height` | Opening transaction block height weight |
 | `agent.heuristic_weights.close.ping_time` | Ping time to the peer node |
 | `agent.heuristic_weights.close.flap_count` | The number of times we have recorded the peer going offline or coming online |

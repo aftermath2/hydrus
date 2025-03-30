@@ -3,7 +3,6 @@ package agent
 import (
 	"context"
 	"encoding/json"
-	"reflect"
 
 	"github.com/aftermath2/hydrus/agent/local"
 	"github.com/aftermath2/hydrus/channel"
@@ -174,7 +173,7 @@ func (a *agent) selectNodes(ctx context.Context, localNode local.Node, candidate
 }
 
 func (a *agent) selectChannels(localNode local.Node, candidates []channelCandidate) map[string]bool {
-	weightsSum := SumWeights(a.config.HeuristicWeights.Close)
+	weightsSum := config.SumWeights(a.config.HeuristicWeights.Close)
 
 	channels := make(map[string]bool, localNode.MaxCloseChannels)
 	for _, candidate := range candidates {
@@ -230,15 +229,4 @@ func skipOpen(config config.Agent, localNode local.Node) error {
 	}
 
 	return nil
-}
-
-// SumWeights returns the sum of the values stored in the weights objects.
-func SumWeights[T config.CloseWeights | config.OpenWeights](weights T) float64 {
-	w := reflect.ValueOf(weights)
-	sum := 0.0
-	for i := range w.NumField() {
-		sum += w.Field(i).Interface().(float64)
-	}
-
-	return sum
 }

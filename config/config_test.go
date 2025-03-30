@@ -80,12 +80,12 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:  "Negative heuristic weight",
-			setup: func(c *Config) { c.Agent.HeuristicWeights.Open.BaseFee = -1 },
+			setup: func(c *Config) { c.Agent.HeuristicWeights.Open.Channels.BaseFee = -1 },
 			fail:  true,
 		},
 		{
 			name:  "Heuristic weight over one",
-			setup: func(c *Config) { c.Agent.HeuristicWeights.Open.FeeRate = 2 },
+			setup: func(c *Config) { c.Agent.HeuristicWeights.Open.Channels.FeeRate = 2 },
 			fail:  true,
 		},
 		{
@@ -143,4 +143,74 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(t, DefaultCloseWeights, config.Agent.HeuristicWeights.Close)
 	assert.Equal(t, time.Duration(time.Second*30), config.Lightning.RPC.Timeout)
 	assert.Equal(t, "info", config.Logging.Level)
+}
+
+func TestIterWeights(t *testing.T) {
+	closeWeights := CloseWeights{
+		Capacity:       1,
+		Active:         0.5,
+		NumForwards:    0.5,
+		ForwardsAmount: 1,
+		Fees:           0.5,
+		BlockHeight:    1,
+		PingTime:       0.5,
+		FlapCount:      0,
+	}
+
+	expected := 4
+	sum := 0
+	IterWeights(closeWeights, func(weight float64) error {
+		if weight == 0.5 {
+			sum++
+		}
+		return nil
+	})
+
+	assert.Equal(t, expected, sum)
+}
+
+func TestSumWeightsClose(t *testing.T) {
+	closeWeights := CloseWeights{
+		Capacity:       1,
+		Active:         0.5,
+		NumForwards:    0.5,
+		ForwardsAmount: 1,
+		Fees:           0.5,
+		BlockHeight:    1,
+		PingTime:       0.5,
+		FlapCount:      0,
+	}
+	expected := 5.0
+
+	actual := SumWeights(closeWeights)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestSumWeightsOpen(t *testing.T) {
+	openWeights := OpenWeights{
+		Capacity: 0.7,
+		Features: 0.5,
+		Hybrid:   1,
+		Centrality: CentralityWeights{
+			Degree:      1,
+			Betweenness: 1,
+			Eigenvector: 1,
+			Closeness:   1,
+		},
+		Channels: ChannelsWeights{
+			BaseFee:        0.8,
+			FeeRate:        1,
+			InboundBaseFee: 0.4,
+			InboundFeeRate: 0.4,
+			MinHTLC:        1,
+			MaxHTLC:        0.5,
+			BlockHeight:    0.7,
+		},
+	}
+	expected := 11.0
+
+	actual := SumWeights(openWeights)
+
+	assert.Equal(t, expected, actual)
 }

@@ -61,7 +61,7 @@ func TestHeuristicsGetScore(t *testing.T) {
 				},
 				NumFeatures: 12,
 			},
-			expectedScore: 7.4,
+			expectedScore: 8.2,
 		},
 		{
 			desc:       "Default values 2",
@@ -87,24 +87,28 @@ func TestHeuristicsGetScore(t *testing.T) {
 				},
 				NumFeatures: 12,
 			},
-			expectedScore: 6,
+			expectedScore: 6.8,
 		},
 		{
 			desc: "Full weights",
 			heuristics: NewHeuristics(config.OpenWeights{
-				Capacity:              1,
-				Features:              1,
-				Hybrid:                1,
-				BaseFee:               1,
-				FeeRate:               1,
-				InboundBaseFee:        1,
-				InboundFeeRate:        1,
-				MinHTLC:               1,
-				MaxHTLC:               1,
-				DegreeCentrality:      1,
-				BetweennessCentrality: 1,
-				EigenvectorCentrality: 1,
-				ClosenessCentrality:   1,
+				Capacity: 1,
+				Features: 1,
+				Hybrid:   1,
+				Centrality: config.CentralityWeights{
+					Degree:      1,
+					Betweenness: 1,
+					Eigenvector: 1,
+					Closeness:   1,
+				},
+				Channels: config.ChannelsWeights{
+					BaseFee:        1,
+					FeeRate:        1,
+					InboundBaseFee: 1,
+					InboundFeeRate: 1,
+					MinHTLC:        1,
+					MaxHTLC:        1,
+				},
 			}),
 			node: Node{
 				Capacity:  1_000_000,
@@ -145,19 +149,24 @@ func TestHeuristicsGetScore(t *testing.T) {
 
 func TestHeuristicsUpdate(t *testing.T) {
 	config := config.OpenWeights{
-		Capacity:              0.6,
-		Features:              0.7,
-		Hybrid:                1,
-		DegreeCentrality:      0.5,
-		BetweennessCentrality: 0.1,
-		ClosenessCentrality:   0.9,
-		EigenvectorCentrality: 1,
-		BaseFee:               0.6,
-		FeeRate:               0.7,
-		InboundBaseFee:        0.8,
-		InboundFeeRate:        0.9,
-		MinHTLC:               1,
-		MaxHTLC:               1,
+		Capacity: 0.6,
+		Features: 0.7,
+		Hybrid:   1,
+		Centrality: config.CentralityWeights{
+			Degree:      0.5,
+			Betweenness: 0.1,
+			Closeness:   0.9,
+			Eigenvector: 1,
+		},
+		Channels: config.ChannelsWeights{
+			BaseFee:        0.6,
+			FeeRate:        0.7,
+			InboundBaseFee: 0.8,
+			InboundFeeRate: 0.9,
+			MinHTLC:        1,
+			MaxHTLC:        1,
+			BlockHeight:    1,
+		},
 	}
 	node := Node{
 		Capacity: 100,
@@ -187,16 +196,17 @@ func TestHeuristicsUpdate(t *testing.T) {
 	result := 1.0
 	assert.Equal(t, result*config.Capacity, h.Capacity.GetScore(node.Capacity))
 	assert.Equal(t, result*config.Features, h.Features.GetScore(node.NumFeatures))
-	assert.Equal(t, result*config.DegreeCentrality, h.DegreeCentrality.GetScore(node.Centrality.Degree))
-	assert.Equal(t, result*config.BetweennessCentrality, h.BetweennessCentrality.GetScore(node.Centrality.Betweenness))
-	assert.Equal(t, result*config.ClosenessCentrality, h.ClosenessCentrality.GetScore(node.Centrality.Closeness))
-	assert.Equal(t, result*config.EigenvectorCentrality, h.EigenvectorCentrality.GetScore(node.Centrality.Eigenvector))
-	assert.Equal(t, result*config.BaseFee, h.BaseFee.GetScore(node.Channels[0].BaseFee))
-	assert.Equal(t, result*config.FeeRate, h.FeeRate.GetScore(node.Channels[0].FeeRate))
-	assert.Equal(t, result*config.InboundBaseFee, h.InboundBaseFee.GetScore(node.Channels[0].InboundBaseFee))
-	assert.Equal(t, result*config.InboundFeeRate, h.InboundFeeRate.GetScore(node.Channels[0].InboundFeeRate))
-	assert.Equal(t, result*config.MinHTLC, h.MinHTLC.GetScore(node.Channels[0].MinHTLC))
-	assert.Equal(t, result*config.MaxHTLC, h.MaxHTLC.GetScore(node.Channels[0].MaxHTLC))
+	assert.Equal(t, result*config.Centrality.Degree, h.Centrality.Degree.GetScore(node.Centrality.Degree))
+	assert.Equal(t, result*config.Centrality.Betweenness, h.Centrality.Betweenness.GetScore(node.Centrality.Betweenness))
+	assert.Equal(t, result*config.Centrality.Closeness, h.Centrality.Closeness.GetScore(node.Centrality.Closeness))
+	assert.Equal(t, result*config.Centrality.Eigenvector, h.Centrality.Eigenvector.GetScore(node.Centrality.Eigenvector))
+	assert.Equal(t, result*config.Channels.BaseFee, h.Channels.BaseFee.GetScore(node.Channels[0].BaseFee))
+	assert.Equal(t, result*config.Channels.FeeRate, h.Channels.FeeRate.GetScore(node.Channels[0].FeeRate))
+	assert.Equal(t, result*config.Channels.InboundBaseFee, h.Channels.InboundBaseFee.GetScore(node.Channels[0].InboundBaseFee))
+	assert.Equal(t, result*config.Channels.InboundFeeRate, h.Channels.InboundFeeRate.GetScore(node.Channels[0].InboundFeeRate))
+	assert.Equal(t, result*config.Channels.MinHTLC, h.Channels.MinHTLC.GetScore(node.Channels[0].MinHTLC))
+	assert.Equal(t, result*config.Channels.MaxHTLC, h.Channels.MaxHTLC.GetScore(node.Channels[0].MaxHTLC))
+	assert.Equal(t, result*config.Channels.BlockHeight, h.Channels.BlockHeight.GetScore(node.Channels[0].BlockHeight))
 }
 
 func TestHeuristicsUpdateField(t *testing.T) {

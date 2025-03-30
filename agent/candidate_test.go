@@ -36,12 +36,12 @@ func TestGetCandidateNodes(t *testing.T) {
 				{
 					PublicKey: "bob",
 					Addresses: []string{},
-					Score:     6.367,
+					Score:     7.167,
 				},
 				{
 					PublicKey: "dave",
 					Addresses: []string{},
-					Score:     6.2,
+					Score:     7,
 				},
 			},
 			localNode: local.Node{
@@ -174,19 +174,23 @@ func TestGetCandidateNodes(t *testing.T) {
 			},
 			graph: graph.Graph{
 				Heuristics: *graph.NewHeuristics(config.OpenWeights{
-					Capacity:              0,
-					Features:              0,
-					Hybrid:                0,
-					BaseFee:               0,
-					FeeRate:               1,
-					InboundBaseFee:        0,
-					InboundFeeRate:        0,
-					MinHTLC:               0,
-					MaxHTLC:               0,
-					DegreeCentrality:      0,
-					BetweennessCentrality: 0,
-					EigenvectorCentrality: 0,
-					ClosenessCentrality:   0,
+					Capacity: 0,
+					Features: 0,
+					Hybrid:   0,
+					Centrality: config.CentralityWeights{
+						Degree:      0,
+						Betweenness: 0,
+						Eigenvector: 0,
+						Closeness:   0,
+					},
+					Channels: config.ChannelsWeights{
+						BaseFee:        0,
+						FeeRate:        1,
+						InboundBaseFee: 0,
+						InboundFeeRate: 0,
+						MinHTLC:        0,
+						MaxHTLC:        0,
+					},
 				}),
 				Nodes: []graph.Node{
 					{
@@ -361,7 +365,7 @@ func TestGetCandidateChannels(t *testing.T) {
 				{
 					Point:          "1",
 					Active:         true,
-					Age:            10,
+					BlockHeight:    10,
 					Capacity:       5_000_000,
 					NumForwards:    900,
 					ForwardsAmount: 3_000_000_000,
@@ -372,7 +376,7 @@ func TestGetCandidateChannels(t *testing.T) {
 				{
 					Point:          "2",
 					Active:         true,
-					Age:            21,
+					BlockHeight:    21,
 					Capacity:       12_000_000,
 					NumForwards:    2_000,
 					ForwardsAmount: 150_000_000_000,
@@ -383,7 +387,7 @@ func TestGetCandidateChannels(t *testing.T) {
 				{
 					Point:          "3",
 					Active:         true,
-					Age:            100,
+					BlockHeight:    100,
 					Capacity:       100_000,
 					NumForwards:    10,
 					ForwardsAmount: 50_000_000,
@@ -394,7 +398,7 @@ func TestGetCandidateChannels(t *testing.T) {
 				{
 					Point:          "4",
 					Active:         false,
-					Age:            350,
+					BlockHeight:    350,
 					Capacity:       20_000,
 					NumForwards:    5,
 					ForwardsAmount: 150,

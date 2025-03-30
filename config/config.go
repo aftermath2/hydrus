@@ -18,19 +18,24 @@ import (
 var (
 	// DefaultOpenWeights contains the default values for the channel opening heuristic weights.
 	DefaultOpenWeights = OpenWeights{
-		Capacity:              1,
-		Features:              1,
-		Hybrid:                0.8,
-		BaseFee:               1,
-		FeeRate:               0.7,
-		InboundBaseFee:        0.8,
-		InboundFeeRate:        0.7,
-		MinHTLC:               1,
-		MaxHTLC:               0.6,
-		DegreeCentrality:      0.4,
-		BetweennessCentrality: 0.8,
-		EigenvectorCentrality: 0.5,
-		ClosenessCentrality:   0.8,
+		Capacity: 1,
+		Features: 1,
+		Hybrid:   0.8,
+		Centrality: CentralityWeights{
+			Degree:      0.4,
+			Betweenness: 0.8,
+			Eigenvector: 0.5,
+			Closeness:   0.8,
+		},
+		Channels: ChannelsWeights{
+			BaseFee:        1,
+			FeeRate:        0.7,
+			InboundBaseFee: 0.8,
+			InboundFeeRate: 0.7,
+			MinHTLC:        1,
+			MaxHTLC:        0.6,
+			BlockHeight:    0.8,
+		},
 	}
 
 	// DefaultCloseWeights contains the default values for the channel closing heuristic weights.
@@ -41,7 +46,7 @@ var (
 		ForwardsAmount: 1,
 		Fees:           1,
 		PingTime:       0.4,
-		Age:            0.6,
+		BlockHeight:    0.6,
 		FlapCount:      0.2,
 	}
 )
@@ -91,26 +96,37 @@ type CloseWeights struct {
 	NumForwards    float64 `yaml:"num_forwards"`
 	ForwardsAmount float64 `yaml:"forwards_amount"`
 	Fees           float64 `yaml:"fees"`
-	Age            float64 `yaml:"age"`
+	BlockHeight    float64 `yaml:"block_height"`
 	PingTime       float64 `yaml:"ping_time"`
 	FlapCount      float64 `yaml:"flap_count"`
 }
 
 // OpenWeights configuration.
 type OpenWeights struct {
-	Capacity              float64 `yaml:"capacity"`
-	Features              float64 `yaml:"features"`
-	Hybrid                float64 `yaml:"hybrid"`
-	BaseFee               float64 `yaml:"base_fee"`
-	FeeRate               float64 `yaml:"fee_rate"`
-	InboundBaseFee        float64 `yaml:"inbound_base_fee"`
-	InboundFeeRate        float64 `yaml:"inbound_fee_rate"`
-	MinHTLC               float64 `yaml:"min_htlc"`
-	MaxHTLC               float64 `yaml:"max_htlc"`
-	DegreeCentrality      float64 `yaml:"degree_centrality"`
-	BetweennessCentrality float64 `yaml:"betweenness_centrality"`
-	EigenvectorCentrality float64 `yaml:"eigenvector_centrality"`
-	ClosenessCentrality   float64 `yaml:"closeness_centrality"`
+	Capacity   float64           `yaml:"capacity"`
+	Features   float64           `yaml:"features"`
+	Hybrid     float64           `yaml:"hybrid"`
+	Centrality CentralityWeights `yaml:"centrality"`
+	Channels   ChannelsWeights   `yaml:"channels"`
+}
+
+// CentralityWeights configuration.
+type CentralityWeights struct {
+	Degree      float64 `yaml:"degree"`
+	Betweenness float64 `yaml:"betweenness"`
+	Eigenvector float64 `yaml:"eigenvector"`
+	Closeness   float64 `yaml:"closeness"`
+}
+
+// ChannelsWeights configuration.
+type ChannelsWeights struct {
+	BaseFee        float64 `yaml:"base_fee"`
+	FeeRate        float64 `yaml:"fee_rate"`
+	InboundBaseFee float64 `yaml:"inbound_base_fee"`
+	InboundFeeRate float64 `yaml:"inbound_fee_rate"`
+	MinHTLC        float64 `yaml:"min_htlc"`
+	MaxHTLC        float64 `yaml:"max_htlc"`
+	BlockHeight    float64 `yaml:"block_height"`
 }
 
 // Lightning configuration.
@@ -199,26 +215,32 @@ func (c *Config) Validate() error {
 		return errors.New("target confirmations must be greater than 1")
 	}
 
-	openWeights := reflect.ValueOf(c.Agent.HeuristicWeights.Open)
-	for i := range openWeights.NumField() {
-		value := openWeights.Field(i).Interface().(float64)
-		if value < 0 {
+	err := IterWeights(c.Agent.HeuristicWeights.Open, func(weight float64) error {
+		if weight < 0 {
 			return errors.New("heuristic weigths must be equal to or higher than zero")
 		}
-		if value > 1 {
+		if weight > 1 {
 			return errors.New("heuristic weigths must be equal to or lower than one")
 		}
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
-	closeWeights := reflect.ValueOf(c.Agent.HeuristicWeights.Close)
-	for i := range closeWeights.NumField() {
-		value := closeWeights.Field(i).Interface().(float64)
-		if value < 0 {
+	err = IterWeights(c.Agent.HeuristicWeights.Close, func(weight float64) error {
+		if weight < 0 {
 			return errors.New("heuristic weigths must be equal to or higher than zero")
 		}
-		if value > 1 {
+		if weight > 1 {
 			return errors.New("heuristic weigths must be equal to or lower than one")
 		}
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	if _, err := credentials.NewClientTLSFromFile(c.Lightning.RPC.TLSCertPath, ""); err != nil {
@@ -290,4 +312,46 @@ func (c *Config) setDefaults() {
 	if c.Logging.Level == "" {
 		c.Logging.Level = "info"
 	}
+}
+
+// Weights is a set of different heuristic weights.
+type Weights interface {
+	CloseWeights | OpenWeights | CentralityWeights | ChannelsWeights
+}
+
+// IterWeights iterates through the weights executing f on each of the values.
+func IterWeights[T Weights](weights T, f func(weight float64) error) error {
+	var err error
+	w := reflect.ValueOf(weights)
+	for i := range w.NumField() {
+		weight := w.Field(i).Interface()
+		switch weight.(type) {
+		case float64:
+			err = f(weight.(float64))
+		case CentralityWeights:
+			err = IterWeights(weight.(CentralityWeights), func(v float64) error {
+				return f(v)
+			})
+		case ChannelsWeights:
+			err = IterWeights(weight.(ChannelsWeights), func(v float64) error {
+				return f(v)
+			})
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// SumWeights returns the sum of the values stored in the weights objects.
+func SumWeights[T Weights](weights T) float64 {
+	sum := 0.0
+	IterWeights(weights, func(weight float64) error {
+		sum += weight
+		return nil
+	})
+
+	return sum
 }

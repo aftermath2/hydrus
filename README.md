@@ -1,6 +1,6 @@
 ## Hydrus
 
-Lightning automated liquidity management agent. Enjoy self-custodial lightning without worrying about channels.
+Lightning liquidity management agent. Enjoy self-custodial lightning without worrying about channels.
 
 ### Getting started
 
@@ -41,15 +41,15 @@ To take advantage of batching and to avoid creating a transaction for a few chan
 
 To select the best candidates to open a channel to, Hydrus takes several factors into consideration:
 
-- **Capacity**: Node capacity.
-- **Channels**: Node active channels, disabled ones are not taken into account.
+- **Capacity**: Node total capacity.
 - **Centrality**: Network centrality heuristics (see [docs/centrality.md](docs/centrality.md)).
+- **Channels**: Node number of active channels and their age, disabled ones are not taken into account.
 - **Routing policies**: The node's channels fees and HTLC ranges.
 - **Connectivity**: Whether the node is available on both clearnet and tor and the time to reach it.
 - **Features**: Supported features.
 - **Closed channels**: Nodes we have recently closed a channel with will be discarded.
 
-The algorithm will avoid opening channels to nodes that are already connected to the host or nodes that recently closed channels we had with them.
+The algorithm will avoid opening channels to nodes that are already connected to the host or nodes that recently closed channels the host had with them.
 
 #### Weighted heuristics
 
@@ -71,7 +71,7 @@ To close channels, Hydrus analyzes the heuristics of every local channel and pic
 - **Forwards amount**: Bitcoin amount routed through the channel.
 - **Fees**: Fees collected by the channel.
 - **Ping time**: Time to reach the peer node.
-- **Age**: Number of blocks elapsed since the opening transaction, older channels are preferred.
+- **Block height**: Opening transaction block height, older channels are preferred.
 - **Flap count**: Number of times we lost connection with the peer.
 
 It will only close channels if the number of them is higher than `agent.min_channels` and if their score is lower than 0.3 in a scale of 0 to 1.

@@ -2,11 +2,10 @@ package local
 
 import (
 	"context"
-	"encoding/binary"
-	"math/big"
 	"time"
 
 	"github.com/aftermath2/hydrus/config"
+	"github.com/aftermath2/hydrus/graph"
 	"github.com/aftermath2/hydrus/lightning"
 
 	"github.com/lightningnetwork/lnd/lnrpc"
@@ -29,7 +28,7 @@ type Channel struct {
 	ID              uint64 `json:"id,omitempty"`
 	Point           string `json:"point,omitempty"`
 	Active          bool   `json:"active,omitempty"`
-	Age             uint32 `json:"age,omitempty"`
+	BlockHeight     uint32 `json:"block_height,omitempty"`
 	RemotePublicKey string `json:"remote_public_key,omitempty"`
 	Capacity        uint64 `json:"capacity,omitempty"`
 	NumForwards     uint64 `json:"num_forwards,omitempty"`
@@ -66,9 +65,9 @@ func getChannels(
 
 		channel := Channel{
 			ID:              channel.ChanId,
+			BlockHeight:     graph.GetChannelBlockHeight(channel.ChanId),
 			Point:           channel.ChannelPoint,
 			Active:          channel.Active,
-			Age:             GetChannelBlockHeight(channel.ChanId),
 			Capacity:        uint64(channel.Capacity),
 			NumForwards:     numForwards,
 			ForwardsAmount:  forwardsAmount,
@@ -146,13 +145,4 @@ func getPeerInfo(channel *lnrpc.Channel, peers []*lnrpc.Peer) (int64, int32) {
 	}
 
 	return pingTime, flapCount
-}
-
-// GetChannelBlockHeight returns the block height at which a channel has been established based on its ID.
-func GetChannelBlockHeight(channelID uint64) uint32 {
-	idBytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(idBytes, channelID)
-
-	blockHeight := new(big.Int).SetBytes(idBytes[0:3]).Uint64()
-	return uint32(blockHeight)
 }

@@ -16,7 +16,7 @@ type Heuristics struct {
 	ForwardsAmount *heuristic.Heuristic[uint64] `json:"forwards_amount,omitempty"`
 	Fees           *heuristic.Heuristic[uint64] `json:"fees,omitempty"`
 	PingTime       *heuristic.Heuristic[uint64] `json:"ping_time,omitempty"`
-	Age            *heuristic.Heuristic[uint64] `json:"age,omitempty"`
+	BlockHeight    *heuristic.Heuristic[uint64] `json:"block_height,omitempty"`
 	FlapCount      *heuristic.Heuristic[uint64] `json:"flap_count,omitempty"`
 }
 
@@ -28,7 +28,7 @@ func NewHeuristics(weight config.CloseWeights) *Heuristics {
 		NumForwards:    heuristic.New[uint64](weight.NumForwards, false),
 		ForwardsAmount: heuristic.New[uint64](weight.ForwardsAmount, false),
 		Fees:           heuristic.New[uint64](weight.Fees, false),
-		Age:            heuristic.New[uint64](weight.Age, true),
+		BlockHeight:    heuristic.New[uint64](weight.BlockHeight, true),
 		PingTime:       heuristic.New[uint64](weight.PingTime, true),
 		FlapCount:      heuristic.New[uint64](weight.FlapCount, true),
 	}
@@ -44,7 +44,7 @@ func (h *Heuristics) GetScore(channel Channel) float64 {
 
 	score += h.Active.GetScore(active)
 	score += h.Capacity.GetScore(channel.Capacity)
-	score += h.Age.GetScore(uint64(channel.Age))
+	score += h.BlockHeight.GetScore(uint64(channel.BlockHeight))
 	score += h.NumForwards.GetScore(channel.NumForwards)
 	score += h.ForwardsAmount.GetScore(channel.ForwardsAmount)
 	score += h.Fees.GetScore(channel.Fees)
@@ -60,7 +60,7 @@ func (h *Heuristics) Update(channel Channel) {
 	h.NumForwards.Update(channel.NumForwards)
 	h.ForwardsAmount.Update(channel.ForwardsAmount)
 	h.Fees.Update(channel.Fees)
-	h.Age.Update(uint64(channel.Age))
+	h.BlockHeight.Update(uint64(channel.BlockHeight))
 	h.PingTime.Update(uint64(channel.PingTime))
 	h.FlapCount.Update(uint64(channel.FlapCount))
 }

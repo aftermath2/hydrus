@@ -71,19 +71,24 @@ func TestNew(t *testing.T) {
 			},
 		},
 		Heuristics: graph.Heuristics{
-			Capacity:              heuristic.NewFull[uint64](1_000_000, 1_000_000, config.DefaultOpenWeights.Capacity, false),
-			Features:              heuristic.NewFull[int](0, 1, config.DefaultOpenWeights.Features, false),
-			Hybrid:                heuristic.NewFull(0, 1, config.DefaultOpenWeights.Hybrid, false),
-			BaseFee:               heuristic.NewFull[uint64](0, 1000, config.DefaultOpenWeights.BaseFee, true),
-			FeeRate:               heuristic.NewFull[uint64](100, 300, config.DefaultOpenWeights.FeeRate, true),
-			InboundBaseFee:        heuristic.NewFull[int64](0, 0, config.DefaultOpenWeights.InboundBaseFee, true),
-			InboundFeeRate:        heuristic.NewFull[int64](0, 10000, config.DefaultOpenWeights.InboundFeeRate, true),
-			MinHTLC:               heuristic.NewFull[uint64](1, 1, config.DefaultOpenWeights.MinHTLC, true),
-			MaxHTLC:               heuristic.NewFull[uint64](500_000, 1_000_000, config.DefaultOpenWeights.MaxHTLC, false),
-			DegreeCentrality:      heuristic.NewFull[float64](1, 1, config.DefaultOpenWeights.DegreeCentrality, false),
-			BetweennessCentrality: heuristic.NewFull[float64](0, 0, config.DefaultOpenWeights.BetweennessCentrality, false),
-			EigenvectorCentrality: heuristic.NewFull[uint64](1, 1, config.DefaultOpenWeights.EigenvectorCentrality, false),
-			ClosenessCentrality:   heuristic.NewFull[float64](1, 1, config.DefaultOpenWeights.ClosenessCentrality, false),
+			Capacity: heuristic.NewFull[uint64](1_000_000, 1_000_000, config.DefaultOpenWeights.Capacity, false),
+			Features: heuristic.NewFull(0, 1, config.DefaultOpenWeights.Features, false),
+			Hybrid:   heuristic.NewFull(0, 1, config.DefaultOpenWeights.Hybrid, false),
+			Centrality: &graph.CentralityHeuristics{
+				Degree:      heuristic.NewFull[float64](1, 1, config.DefaultOpenWeights.Centrality.Degree, false),
+				Betweenness: heuristic.NewFull[float64](0, 0, config.DefaultOpenWeights.Centrality.Betweenness, false),
+				Eigenvector: heuristic.NewFull[uint64](1, 1, config.DefaultOpenWeights.Centrality.Eigenvector, false),
+				Closeness:   heuristic.NewFull[float64](1, 1, config.DefaultOpenWeights.Centrality.Closeness, false),
+			},
+			Channels: &graph.Channels{
+				BaseFee:        heuristic.NewFull[uint64](0, 1000, config.DefaultOpenWeights.Channels.BaseFee, true),
+				FeeRate:        heuristic.NewFull[uint64](100, 300, config.DefaultOpenWeights.Channels.FeeRate, true),
+				InboundBaseFee: heuristic.NewFull[int64](0, 0, config.DefaultOpenWeights.Channels.InboundBaseFee, true),
+				InboundFeeRate: heuristic.NewFull[int64](0, 10000, config.DefaultOpenWeights.Channels.InboundFeeRate, true),
+				MinHTLC:        heuristic.NewFull[uint64](1, 1, config.DefaultOpenWeights.Channels.MinHTLC, true),
+				MaxHTLC:        heuristic.NewFull[uint64](500_000, 1_000_000, config.DefaultOpenWeights.Channels.MaxHTLC, false),
+				BlockHeight:    heuristic.NewFull[uint64](0, 0, config.DefaultOpenWeights.Channels.BlockHeight, true),
+			},
 		},
 	}
 
@@ -280,6 +285,43 @@ func TestGetAddresses(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := graph.GetAddresses(tt.input)
 			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestGetChannelBlockHeight(t *testing.T) {
+	tests := []struct {
+		name      string
+		channelID uint64
+		expected  uint32
+		note      string
+	}{
+		{
+			name:      "Minimum value",
+			channelID: 0,
+			expected:  0,
+		},
+		{
+			name:      "Maximum uint64",
+			channelID: (1 << 64) - 1,
+			expected:  0xFFFFFF,
+		},
+		{
+			name:      "Regular channel ID",
+			channelID: 191315023298560,
+			expected:  174,
+		},
+		{
+			name:      "Hex channel ID",
+			channelID: 0x0001110000000000,
+			expected:  0x111,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := graph.GetChannelBlockHeight(tt.channelID)
+			assert.Equal(t, tt.expected, actual)
 		})
 	}
 }

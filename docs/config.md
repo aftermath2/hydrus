@@ -83,16 +83,17 @@ lncli bakemacaroon --save_to hydrus.macaroon \
 | `agent.heuristic_weights.open.capacity` | Nodes capacity weight |
 | `agent.heuristic_weights.open.features` | Nodes features weight |
 | `agent.heuristic_weights.open.hybrid` | Weight for nodes addresses types |
-| `agent.heuristic_weights.open.degree_centrality` | Weight for the degree centrality of the node in the network |
-| `agent.heuristic_weights.open.closeness_centrality` | Weight for the closeness centrality of the node |
-| `agent.heuristic_weights.open.betweenness_centrality` | Weight for the betweenness centrality of the node |
-| `agent.heuristic_weights.open.eigenvector_centrality` | Weight for the eigenvector centrality of the node |
-| `agent.heuristic_weights.open.base_fee` | Channels base fees weight |
-| `agent.heuristic_weights.open.fee_rate` | Channels fee rate weight |
-| `agent.heuristic_weights.open.inbound_base_fee` | Inbound base fee weight |
-| `agent.heuristic_weights.open.inbound_fee_rate` | Inbound fee rate weight |
-| `agent.heuristic_weights.open.min_htlc` | Minimum HTLC value weight |
-| `agent.heuristic_weights.open.max_htlc` | Maximum HTLC value allowed weight |
+| `agent.heuristic_weights.open.centrality.degree` | Weight for the degree centrality of the node in the network |
+| `agent.heuristic_weights.open.centrality.closeness` | Weight for the closeness centrality of the node |
+| `agent.heuristic_weights.open.centrality.betweenness` | Weight for the betweenness centrality of the node |
+| `agent.heuristic_weights.open.centrality.eigenvector` | Weight for the eigenvector centrality of the node |
+| `agent.heuristic_weights.open.channels.base_fee` | Channels base fees weight |
+| `agent.heuristic_weights.open.channels.fee_rate` | Channels fee rate weight |
+| `agent.heuristic_weights.open.channels.inbound_base_fee` | Inbound base fee weight |
+| `agent.heuristic_weights.open.channels.inbound_fee_rate` | Inbound fee rate weight |
+| `agent.heuristic_weights.open.channels.min_htlc` | Minimum HTLC value weight |
+| `agent.heuristic_weights.open.channels.max_htlc` | Maximum HTLC value allowed weight |
+| `agent.heuristic_weights.open.channels.block_height` | Channels block height weight |
 
 ##### Close
 
@@ -100,9 +101,9 @@ lncli bakemacaroon --save_to hydrus.macaroon \
 |------|-------------|
 | `agent.heuristic_weights.close.capacity` | Channel capacity |
 | `agent.heuristic_weights.close.active` | Channel status |
-| `agent.heuristic_weights.close.num_forwards` | Number of forwards weight for channel closures |
-| `agent.heuristic_weights.close.forwards_amount` | Total amount forwarded weight for channel closures |
-| `agent.heuristic_weights.close.fees` | Fees collected weight for channel closures |
-| `agent.heuristic_weights.close.age` | Age of the channel when considering closure |
+| `agent.heuristic_weights.close.num_forwards` | Number of forwards weight |
+| `agent.heuristic_weights.close.forwards_amount` | Total amount forwarded weight |
+| `agent.heuristic_weights.close.fees` | Fees collected weight |
+| `agent.heuristic_weights.close.block_height` | Opening transaction block height weight |
 | `agent.heuristic_weights.close.ping_time` | Ping time to the peer node |
 | `agent.heuristic_weights.close.flap_count` | The number of times we have recorded the peer going offline or coming online |

@@ -74,7 +74,7 @@ func TestGetChannels(t *testing.T) {
 		Fees:           0.9,
 		PingTime:       0.5,
 		FlapCount:      1,
-		Age:            1,
+		BlockHeight:    1,
 	}
 	channels := []*lnrpc.Channel{ch1, ch2, ch3, {Private: true}}
 	peers := []*lnrpc.Peer{
@@ -101,7 +101,7 @@ func TestGetChannels(t *testing.T) {
 				ID:              ch1.ChanId,
 				RemotePublicKey: ch1.RemotePubkey,
 				Point:           ch1.ChannelPoint,
-				Age:             174,
+				BlockHeight:     174,
 				Capacity:        uint64(ch1.Capacity),
 				Active:          ch1.Active,
 				NumForwards:     2,
@@ -114,7 +114,7 @@ func TestGetChannels(t *testing.T) {
 				ID:              ch2.ChanId,
 				RemotePublicKey: ch2.RemotePubkey,
 				Point:           ch2.ChannelPoint,
-				Age:             138,
+				BlockHeight:     138,
 				Capacity:        uint64(ch2.Capacity),
 				Active:          ch2.Active,
 				NumForwards:     2,
@@ -127,7 +127,7 @@ func TestGetChannels(t *testing.T) {
 				ID:              ch3.ChanId,
 				RemotePublicKey: ch3.RemotePubkey,
 				Point:           ch3.ChannelPoint,
-				Age:             191,
+				BlockHeight:     191,
 				Capacity:        uint64(ch3.Capacity),
 				Active:          ch3.Active,
 				NumForwards:     2,
@@ -143,7 +143,7 @@ func TestGetChannels(t *testing.T) {
 			NumForwards:    heuristic.NewFull[uint64](2, 2, weights.NumForwards, false),
 			ForwardsAmount: heuristic.NewFull[uint64](6_000, 19_500, weights.ForwardsAmount, false),
 			Fees:           heuristic.NewFull[uint64](600, 1_500, weights.Fees, false),
-			Age:            heuristic.NewFull[uint64](138, 191, weights.Age, true),
+			BlockHeight:    heuristic.NewFull[uint64](138, 191, weights.BlockHeight, true),
 			PingTime:       heuristic.NewFull(uint64(peers[1].PingTime), uint64(peers[2].PingTime), weights.PingTime, true),
 			FlapCount:      heuristic.NewFull(uint64(peers[1].FlapCount), uint64(peers[2].FlapCount), weights.FlapCount, true),
 		},
@@ -400,43 +400,6 @@ func TestGetPeerInfo(t *testing.T) {
 
 			assert.Equal(t, tt.expectedPingTime, pingTime)
 			assert.Equal(t, tt.expectedFlapCount, flapCount)
-		})
-	}
-}
-
-func TestGetChannelBlockHeight(t *testing.T) {
-	tests := []struct {
-		name      string
-		channelID uint64
-		expected  uint32
-		note      string
-	}{
-		{
-			name:      "Minimum value",
-			channelID: 0,
-			expected:  0,
-		},
-		{
-			name:      "Maximum uint64",
-			channelID: (1 << 64) - 1,
-			expected:  0xFFFFFF,
-		},
-		{
-			name:      "Regular channel ID",
-			channelID: 191315023298560,
-			expected:  174,
-		},
-		{
-			name:      "Hex channel ID",
-			channelID: 0x0001110000000000,
-			expected:  0x111,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			actual := GetChannelBlockHeight(tt.channelID)
-			assert.Equal(t, tt.expected, actual)
 		})
 	}
 }

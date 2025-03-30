@@ -27,16 +27,19 @@ agent:
       capacity: 1
       features: 0.6
       hybrid: 1
-      degree_centrality: 0.4
-      closeness_centrality: 1
-      betweenness_centrality: 1
-      eigenvector_centrality: 1
-      base_fee: 0.8
-      fee_rate: 0.8
-      inbound_base_fee: 0.8
-      inbound_fee_rate: 0.8
-      min_htlc: 1
-      max_htlc: 0.5
+      centrality:
+        degree: 0.4
+        closeness: 1
+        betweenness: 1
+        eigenvector: 1
+      channels:
+        base_fee: 0.8
+        fee_rate: 0.8
+        inbound_base_fee: 0.8
+        inbound_fee_rate: 0.8
+        min_htlc: 1
+        max_htlc: 0.5
+        block_height: 1
     close:
       capacity: 0.9
       active: 1
@@ -44,4 +47,4 @@ agent:
       forwards_amount: 1
       fees: 1
       ping_time: 0.4
-      age: 0.6
+      block_height: 0.6

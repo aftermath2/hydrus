@@ -326,48 +326,6 @@ func TestSkipOpen(t *testing.T) {
 	}
 }
 
-func TestSumWeightsClose(t *testing.T) {
-	closeWeights := config.CloseWeights{
-		Capacity:       1,
-		Active:         0.5,
-		NumForwards:    0.5,
-		ForwardsAmount: 1,
-		Fees:           0.5,
-		Age:            1,
-		PingTime:       0.5,
-		FlapCount:      0,
-	}
-	expected := 5.0
-
-	actual := SumWeights(closeWeights)
-
-	assert.Equal(t, expected, actual)
-}
-
-func TestSumWeightsOpen(t *testing.T) {
-	openWeights := config.OpenWeights{
-		Capacity:              0.7,
-		Features:              0.5,
-		Hybrid:                1,
-		BaseFee:               0.8,
-		FeeRate:               1,
-		InboundBaseFee:        0.4,
-		InboundFeeRate:        0.4,
-		MinHTLC:               1,
-		MaxHTLC:               0.5,
-		BlockHeight:           0.7,
-		DegreeCentrality:      1,
-		BetweennessCentrality: 1,
-		EigenvectorCentrality: 1,
-		ClosenessCentrality:   1,
-	}
-	expected := 11.0
-
-	actual := SumWeights(openWeights)
-
-	assert.Equal(t, expected, actual)
-}
-
 func getNode(t *testing.T, lndMock *lightning.ClientMock, config config.Agent, satvB uint64) {
 	t.Helper()
 

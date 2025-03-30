@@ -31,13 +31,14 @@ agent:
       closeness_centrality: 1
       betweenness_centrality: 1
       eigenvector_centrality: 1
-      base_fee: 0.8
-      fee_rate: 0.8
-      inbound_base_fee: 0.8
-      inbound_fee_rate: 0.8
-      min_htlc: 1
-      max_htlc: 0.5
-      block_height: 1
+      channels:
+        base_fee: 0.8
+        fee_rate: 0.8
+        inbound_base_fee: 0.8
+        inbound_fee_rate: 0.8
+        min_htlc: 1
+        max_htlc: 0.5
+        block_height: 1
     close:
       capacity: 0.9
       active: 1

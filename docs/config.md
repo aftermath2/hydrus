@@ -87,13 +87,13 @@ lncli bakemacaroon --save_to hydrus.macaroon \
 | `agent.heuristic_weights.open.closeness_centrality` | Weight for the closeness centrality of the node |
 | `agent.heuristic_weights.open.betweenness_centrality` | Weight for the betweenness centrality of the node |
 | `agent.heuristic_weights.open.eigenvector_centrality` | Weight for the eigenvector centrality of the node |
-| `agent.heuristic_weights.open.base_fee` | Channels base fees weight |
-| `agent.heuristic_weights.open.fee_rate` | Channels fee rate weight |
-| `agent.heuristic_weights.open.inbound_base_fee` | Inbound base fee weight |
-| `agent.heuristic_weights.open.inbound_fee_rate` | Inbound fee rate weight |
-| `agent.heuristic_weights.open.min_htlc` | Minimum HTLC value weight |
-| `agent.heuristic_weights.open.max_htlc` | Maximum HTLC value allowed weight |
-| `agent.heuristic_weights.open.block_height` | Channels block height (age) weight |
+| `agent.heuristic_weights.open.channels.base_fee` | Channels base fees weight |
+| `agent.heuristic_weights.open.channels.fee_rate` | Channels fee rate weight |
+| `agent.heuristic_weights.open.channels.inbound_base_fee` | Inbound base fee weight |
+| `agent.heuristic_weights.open.channels.inbound_fee_rate` | Inbound fee rate weight |
+| `agent.heuristic_weights.open.channels.min_htlc` | Minimum HTLC value weight |
+| `agent.heuristic_weights.open.channels.max_htlc` | Maximum HTLC value allowed weight |
+| `agent.heuristic_weights.open.channels.block_height` | Channels block height (age) weight |
 
 ##### Close
 

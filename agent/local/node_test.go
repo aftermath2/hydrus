@@ -98,7 +98,7 @@ func TestGetNode(t *testing.T) {
 			lndMock.On("ListPeers", ctx).Return(peersResp, nil)
 			lndMock.On("ClosedChannels", ctx).Return(closedChannelsResp, nil)
 			lndMock.On("EstimateTxFee", ctx, config.TargetConf).Return(feeResp, nil)
-			lndMock.On("ListForwards", ctx, mock.Anything, uint32(0)).Return(forwardsResp, nil)
+			lndMock.On("ListForwards", ctx, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
 
 			expectedNode := local.Node{
 				PublicKey: infoResp.IdentityPubkey,

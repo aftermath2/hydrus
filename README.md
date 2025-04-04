@@ -4,7 +4,7 @@ Lightning liquidity management agent. Enjoy self-custodial lightning without wor
 
 ### Getting started
 
-To install and configure Hydrus, check out [docs/install.md](docs/install.md) and [docs/config.md](docs/config.md).
+To install and configure Hydrus, check out the [install](docs/install/install.md) and [config](docs/config.md) guides.
 
 > [!Note]
 > LND is the only lightning implementation supported for now.

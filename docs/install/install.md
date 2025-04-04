@@ -25,39 +25,11 @@ Good timeframes are probably weekly, semi-monthly or monthly.
 
 ### Systemd (recommended)
 
-1. Create a service 
-
-```toml
-# hydrus.service
-[Unit]
-Description=Hydrus
-
-[Service]
-ExecStart=/usr/local/bin/hydrus
-Restart=on-failure
-RestartSec=30s
-StartLimitInterval=5min
-StartLimitBurst=3
-
-[Install]
-WantedBy=multi-user.target
-```
+1. Create a service, check out [hydrus.service](./hydrus.service) for a sample file.
 
 2. Create the timer for the service. It is suggested to execute Hydrus on the weekends, as fees are typically lower during this period.
 
-```toml
-# hydrus.timer
-[Unit]
-Description=Hydrus timer
-
-[Timer]
-OnCalendar=Sat *-*-* 20:00:00
-Unit=hydrus.service
-Persistent=false
-
-[Install]
-WantedBy=multi-user.target
-```
+Check out [hydrus.timer](./hydrus.timer) for a sample file.
 
 3. Enable and start timer
 

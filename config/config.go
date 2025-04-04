@@ -1,6 +1,7 @@
 package config
 
 import (
+	"cmp"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -149,15 +150,13 @@ type RPC struct {
 
 // Load returns a configuration object loaded from a file.
 func Load(path string) (*Config, error) {
+	path = cmp.Or(path, os.Getenv("HYDRUS_CONFIG"))
 	if path == "" {
-		path = os.Getenv("HYDRUS_CONFIG")
-		if path == "" {
-			dir, err := os.UserHomeDir()
-			if err != nil {
-				return nil, errors.Wrap(err, "getting home directory")
-			}
-			path = filepath.Join(dir, "hydrus.yml")
+		dir, err := os.UserHomeDir()
+		if err != nil {
+			return nil, errors.Wrap(err, "getting home directory")
 		}
+		path = filepath.Join(dir, "hydrus.yml")
 	}
 
 	f, err := os.OpenFile(path, os.O_RDONLY, 0o600)

@@ -3,8 +3,6 @@ package channel
 import (
 	"context"
 	"encoding/hex"
-	"strconv"
-	"strings"
 
 	"github.com/aftermath2/hydrus/config"
 	"github.com/aftermath2/hydrus/lightning"
@@ -35,6 +33,7 @@ type Manager interface {
 	Open(ctx context.Context, req OpenRequest) error
 	Close(ctx context.Context, req CloseRequest) error
 	// Splice(channelID uint64, amount int64) error
+	UpdatePolicy(ctx context.Context, channelPoint string, feeRatePPM, maxHTLC uint64) error
 }
 
 type manager struct {
@@ -103,7 +102,7 @@ func (m *manager) Close(ctx context.Context, req CloseRequest) error {
 }
 
 func (m *manager) close(ctx context.Context, satvB uint64, channelPoint string, force bool) error {
-	chanPoint, err := parseChannelPoint(channelPoint)
+	chanPoint, err := lightning.ParseChannelPoint(channelPoint)
 	if err != nil {
 		return errors.Wrap(err, "parsing channel point")
 	}
@@ -141,31 +140,6 @@ func (m *manager) close(ctx context.Context, satvB uint64, channelPoint string, 
 	}
 }
 
-func parseChannelPoint(channelPoint string) (*lnrpc.ChannelPoint, error) {
-	txID, outpoint, ok := strings.Cut(channelPoint, ":")
-	if !ok {
-		return nil, errors.New("invalid format")
-	}
-
-	if txID == "" {
-		return nil, errors.New("invalid transaction ID")
-	}
-
-	if outpoint == "" {
-		return nil, errors.New("invalid outpoint index")
-	}
-
-	outputIndex, err := strconv.ParseUint(outpoint, 10, 32)
-	if err != nil {
-		return nil, errors.Wrap(err, "parsing outpoint index")
-	}
-
-	chanPoint := &lnrpc.ChannelPoint{
-		FundingTxid: &lnrpc.ChannelPoint_FundingTxidStr{
-			FundingTxidStr: txID,
-		},
-		OutputIndex: uint32(outputIndex),
-	}
-
-	return chanPoint, nil
+func (m *manager) UpdatePolicy(ctx context.Context, channelPoint string, feeRatePPM, maxHTLC uint64) error {
+	return m.lnd.UpdateChannelPolicy(ctx, channelPoint, feeRatePPM, maxHTLC)
 }

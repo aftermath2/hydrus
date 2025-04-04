@@ -67,6 +67,7 @@ type Agent struct {
 	Keeplist          []string          `yaml:"keeplist"`
 	ChannelManager    ChannelManager    `yaml:"channel_manager"`
 	HeuristicWeights  HeuristicsWeights `yaml:"heuristic_weights"`
+	RoutingPolicies   RoutingPolicies   `yaml:"routing_policies"`
 	AllocationPercent uint64            `yaml:"allocation_percent"`
 	MinBatchSize      uint64            `yaml:"min_batch_size"`
 	MinChannels       uint64            `yaml:"min_channels"`
@@ -128,6 +129,11 @@ type ChannelsWeights struct {
 	MinHTLC        float64 `yaml:"min_htlc"`
 	MaxHTLC        float64 `yaml:"max_htlc"`
 	BlockHeight    float64 `yaml:"block_height"`
+}
+
+// RoutingPolicies configuration.
+type RoutingPolicies struct {
+	ActivityPeriod time.Duration `yaml:"activity_period"`
 }
 
 // Lightning configuration.
@@ -242,6 +248,10 @@ func (c *Config) Validate() error {
 		return err
 	}
 
+	if c.Agent.RoutingPolicies.ActivityPeriod < time.Hour {
+		return errors.New("routing policies activity period must be longer than an hour")
+	}
+
 	if _, err := credentials.NewClientTLSFromFile(c.Lightning.RPC.TLSCertPath, ""); err != nil {
 		return errors.Wrap(err, "invalid tls certificate path")
 	}
@@ -302,6 +312,10 @@ func (c *Config) setDefaults() {
 
 	if c.Agent.HeuristicWeights.Close == (CloseWeights{}) {
 		c.Agent.HeuristicWeights.Close = DefaultCloseWeights
+	}
+
+	if c.Agent.RoutingPolicies.ActivityPeriod == 0 {
+		c.Agent.RoutingPolicies.ActivityPeriod = time.Hour * 24
 	}
 
 	if c.Lightning.RPC.Timeout == 0 {

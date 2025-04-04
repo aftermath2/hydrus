@@ -33,6 +33,7 @@ type Channel struct {
 	Capacity        uint64 `json:"capacity,omitempty"`
 	NumForwards     uint64 `json:"num_forwards,omitempty"`
 	ForwardsAmount  uint64 `json:"forwards_amount,omitempty"`
+	LocalBalance    uint64 `json:"local_balance,omitempty"`
 	Fees            uint64 `json:"fees,omitempty"`
 	PingTime        int64  `json:"ping_time,omitempty"`
 	FlapCount       int32  `json:"flap_count,omitempty"`
@@ -71,6 +72,7 @@ func getChannels(
 			Capacity:        uint64(channel.Capacity),
 			NumForwards:     numForwards,
 			ForwardsAmount:  forwardsAmount,
+			LocalBalance:    uint64(channel.LocalBalance),
 			Fees:            fees,
 			RemotePublicKey: channel.RemotePubkey,
 			PingTime:        pingTime,

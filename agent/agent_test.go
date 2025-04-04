@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/aftermath2/hydrus/agent/local"
+	"github.com/aftermath2/hydrus/channel"
 	"github.com/aftermath2/hydrus/config"
 	"github.com/aftermath2/hydrus/lightning"
 	"github.com/aftermath2/hydrus/logger"
@@ -235,6 +236,294 @@ func TestSelectChannels(t *testing.T) {
 	}
 }
 
+func TestUpdatePolicies(t *testing.T) {
+	ctx := t.Context()
+	lndMock := lightning.NewClientMock()
+	agent := agent{
+		lnd:    lndMock,
+		logger: logger.New(""),
+		config: config.Agent{
+			MaxChannelSize: 10_000_000,
+		},
+		channelManager: channel.NewManager(config.ChannelManager{}, lndMock),
+	}
+	publicKey := "test"
+	channelID := uint64(191315023298560)
+	channelPoint := "1"
+	localNode := local.Node{
+		PublicKey: publicKey,
+		Channels: local.Channels{
+			List: []local.Channel{
+				{
+					ID:           channelID,
+					Point:        channelPoint,
+					LocalBalance: 2_463_000,
+					Capacity:     5_000_000,
+				},
+			},
+		},
+	}
+	forwardsResp := &lnrpc.ForwardingHistoryResponse{
+		ForwardingEvents: []*lnrpc.ForwardingEvent{
+			{
+				ChanIdIn: channelID,
+				AmtIn:    30_000,
+			},
+			{
+				ChanIdIn: channelID,
+				AmtIn:    1_200_000,
+			},
+			{
+				ChanIdOut: channelID,
+				AmtOut:    520_000,
+			},
+			{
+				ChanIdOut: channelID,
+				AmtOut:    30_000,
+			},
+			{
+				ChanIdOut: channelID,
+				AmtOut:    1_200_000,
+			},
+		},
+	}
+	chanInfoResp := &lnrpc.ChannelEdge{
+		ChannelId: channelID,
+		Node1Pub:  publicKey,
+		Node1Policy: &lnrpc.RoutingPolicy{
+			FeeRateMilliMsat: 100,
+			MaxHtlcMsat:      4_600_000_000,
+		},
+	}
+	expectedFeeRatePPM := uint64(108)
+	expectedMaxHTLCMsat := uint64(1_970_400_000)
+
+	lndMock.On("ListForwards", ctx, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
+	lndMock.On("GetChanInfo", ctx, channelID).Return(chanInfoResp, nil)
+	lndMock.On("UpdateChannelPolicy", ctx, channelPoint, expectedFeeRatePPM, expectedMaxHTLCMsat).Return(nil)
+
+	err := agent.updatePolicies(ctx, localNode)
+	assert.NoError(t, err)
+}
+
+func TestGetChannelPolicy(t *testing.T) {
+	ctx := t.Context()
+	channel := local.Channel{ID: 1}
+	publicKey := "test"
+
+	tests := []struct {
+		desc     string
+		chanInfo *lnrpc.ChannelEdge
+	}{
+		{
+			desc: "Node 1",
+			chanInfo: &lnrpc.ChannelEdge{
+				Node1Pub: publicKey,
+				Node1Policy: &lnrpc.RoutingPolicy{
+					TimeLockDelta:    80,
+					MinHtlc:          1,
+					FeeBaseMsat:      0,
+					FeeRateMilliMsat: 100,
+					Disabled:         false,
+					MaxHtlcMsat:      1_000_000,
+				},
+			},
+		},
+		{
+			desc: "Node 2",
+			chanInfo: &lnrpc.ChannelEdge{
+				Node2Pub: publicKey,
+				Node2Policy: &lnrpc.RoutingPolicy{
+					TimeLockDelta:    80,
+					MinHtlc:          1,
+					FeeBaseMsat:      0,
+					FeeRateMilliMsat: 100,
+					Disabled:         false,
+					MaxHtlcMsat:      1_000_000,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			lndMock := lightning.NewClientMock()
+
+			lndMock.On("GetChanInfo", ctx, channel.ID).Return(tt.chanInfo, nil)
+
+			policy, err := getChannelPolicy(ctx, lndMock, publicKey, channel)
+			assert.NoError(t, err)
+
+			if tt.chanInfo.Node1Pub == publicKey {
+				assert.Equal(t, tt.chanInfo.Node1Policy, policy)
+			} else {
+				assert.Equal(t, tt.chanInfo.Node2Policy, policy)
+			}
+		})
+	}
+}
+
+func TestCalcNewFeeRate(t *testing.T) {
+	tests := []struct {
+		desc               string
+		channel            local.Channel
+		feeRatePPM         uint64
+		forwardsAmountIn   uint64
+		forwardsAmountOut  uint64
+		expectedFeeRatePPM uint64
+	}{
+		{
+			desc: "Low local balance",
+			channel: local.Channel{
+				LocalBalance: 9,
+				Capacity:     1_000,
+			},
+			expectedFeeRatePPM: 2_100,
+		},
+		{
+			desc: "High local balance",
+			channel: local.Channel{
+				LocalBalance: 995,
+				Capacity:     1_000,
+			},
+			expectedFeeRatePPM: 0,
+		},
+		{
+			desc:               "No forwards",
+			feeRatePPM:         50,
+			forwardsAmountOut:  0,
+			expectedFeeRatePPM: 45,
+		},
+		{
+			desc:               "Very low ratio",
+			feeRatePPM:         50,
+			forwardsAmountOut:  1,
+			forwardsAmountIn:   1000,
+			expectedFeeRatePPM: 26,
+		},
+		{
+			desc:               "Low ratio",
+			feeRatePPM:         50,
+			forwardsAmountIn:   1000,
+			forwardsAmountOut:  200,
+			expectedFeeRatePPM: 34,
+		},
+		{
+			desc:               "Medium ratio",
+			feeRatePPM:         50,
+			forwardsAmountIn:   1000,
+			forwardsAmountOut:  1000,
+			expectedFeeRatePPM: 50,
+		},
+		{
+			desc:               "High ratio",
+			feeRatePPM:         50,
+			forwardsAmountIn:   1000,
+			forwardsAmountOut:  1700,
+			expectedFeeRatePPM: 56,
+		},
+		{
+			desc:               "Very high ratio",
+			feeRatePPM:         50,
+			forwardsAmountIn:   1000,
+			forwardsAmountOut:  7000,
+			expectedFeeRatePPM: 68,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			result := calcNewFeeRate(tt.channel, tt.feeRatePPM, tt.forwardsAmountIn, tt.forwardsAmountOut)
+			assert.Equal(t, tt.expectedFeeRatePPM, result)
+		})
+	}
+}
+
+func TestCalcNewMaxHTLC(t *testing.T) {
+	tests := []struct {
+		desc           string
+		channel        local.Channel
+		expectedResult uint64
+	}{
+		{
+			desc: "Low balance",
+			channel: local.Channel{
+				LocalBalance: 1,
+			},
+			expectedResult: 1_000,
+		},
+		{
+			desc: "Medium balance",
+			channel: local.Channel{
+				LocalBalance: 764_000,
+			},
+			expectedResult: 611_200_000,
+		},
+		{
+			desc: "High balance",
+			channel: local.Channel{
+				LocalBalance: 5_500_000,
+			},
+			expectedResult: 4_400_000_000,
+		},
+		{
+			desc: "Very high balance",
+			channel: local.Channel{
+				LocalBalance: 23_000_000,
+			},
+			expectedResult: 18_400_000_000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			result := calcNewMaxHTLC(tt.channel)
+			assert.Equal(t, tt.expectedResult, result)
+		})
+	}
+}
+
+func TestGetPercentage(t *testing.T) {
+	tests := []struct {
+		desc           string
+		value          uint64
+		percent        uint64
+		expectedResult uint64
+	}{
+		{
+			desc:           "Round",
+			value:          250,
+			percent:        10,
+			expectedResult: 25,
+		},
+		{
+			desc:           "Round 2",
+			value:          1200,
+			percent:        25,
+			expectedResult: 300,
+		},
+		{
+			desc:           "Imprecise",
+			value:          256,
+			percent:        10,
+			expectedResult: 25,
+		},
+		{
+			desc:           "Imprecise 2",
+			value:          2048,
+			percent:        80,
+			expectedResult: 1638,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			result := getPercentage(tt.value, tt.percent)
+			assert.Equal(t, tt.expectedResult, result)
+		})
+	}
+}
+
 func TestSkipOpen(t *testing.T) {
 	tests := []struct {
 		desc      string
@@ -363,5 +652,5 @@ func getNode(t *testing.T, lndMock *lightning.ClientMock, config config.Agent, s
 	lndMock.On("ListPeers", ctx).Return(peersResp, nil)
 	lndMock.On("ClosedChannels", ctx).Return(closedChannelsResp, nil)
 	lndMock.On("EstimateTxFee", ctx, config.TargetConf).Return(feeResp, nil)
-	lndMock.On("ListForwards", ctx, mock.Anything, uint32(0)).Return(forwardsResp, nil)
+	lndMock.On("ListForwards", ctx, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
 }

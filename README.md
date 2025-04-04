@@ -18,9 +18,6 @@ Hydrus opens channels automatically based on the state of the network graph. It 
 
 It is completely stateless, uses only the information provided by the lightning daemon RPC API.
 
-> [!Note]
-> Hydrus does not update fees at the moment, this might be added in future releases.
-
 ## Channel opening
 
 Hydrus constructs the network graph in memory and calculate its statistics to obtain the best scores possible for each one of the heuristics. 
@@ -75,6 +72,20 @@ To close channels, Hydrus analyzes the heuristics of every local channel and pic
 - **Flap count**: Number of times we lost connection with the peer.
 
 It will only close channels if the number of them is higher than `agent.min_channels` and if their score is lower than 0.3 in a scale of 0 to 1.
+
+## Routing policies
+
+Channels routing policies are adjusted based on the channel state (capacity, local balance) and the amount of satoshis forwarded in the last activity period.
+
+- If the local balance is lower than 1% of the channel capacity, the fee rate is set to 2,100 ppm to discourage routing thorugh the channel.
+- If the local balance is higher than 99% of the channel capacity, the fee rate is set to 0 ppm to incentivize routing thorugh the channel.
+- If the amount of satoshis forwarded out through the channel is zero, the fee rate is decreased by 10%.
+- If the ratio forwards amount out/in is below 0.5, the fee rate is decreased proportionally to half the ratio.
+- If the ratio forwards amount out/in is above 0.5, the fee rate is increased proportionally to half the ratio.
+
+> For example, if the forwards ratio is 0.8, meaning that we are sending more payments than receiving, the fee rate will be increased by 30% (0.8 - 0.5). Similarly, if the forwards ratio is 0.4, the fee rate will be decreased by 0.1% (0.5 - 0.4).
+
+Apart from this, Hydrus adjusts the maximum HTLC value to 80% of the local balance. It is not set to the exact local balance to leave a buffer of 20% of the funds, in order to avoid running out of liquidity and failing to route payments before the next update.
 
 ## Differences with LND's autopilot
 

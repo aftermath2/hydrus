@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -52,11 +53,13 @@ type Client interface {
 	DescribeGraph(ctx context.Context) (*lnrpc.ChannelGraph, error)
 	EstimateTxFee(ctx context.Context, targetConf int32) (uint64, error)
 	EstimateRouteFee(ctx context.Context, publicKey string) (*routerrpc.RouteFeeResponse, error)
+	GetChanInfo(ctx context.Context, channelID uint64) (*lnrpc.ChannelEdge, error)
 	GetInfo(ctx context.Context) (*lnrpc.GetInfoResponse, error)
 	ListChannels(ctx context.Context) ([]*lnrpc.Channel, error)
-	ListForwards(ctx context.Context, startTime uint64, indexOffset uint32) (*lnrpc.ForwardingHistoryResponse, error)
+	ListForwards(ctx context.Context, startTime, endTime uint64, indexOffset uint32) (*lnrpc.ForwardingHistoryResponse, error)
 	ListPeers(ctx context.Context) ([]*lnrpc.Peer, error)
 	QueryRoute(ctx context.Context, publicKey string) (*lnrpc.QueryRoutesResponse, error)
+	UpdateChannelPolicy(ctx context.Context, channelPoint string, feeRatePPM, maxHTLC uint64) error
 	WalletBalance(ctx context.Context, minConf int32) (*lnrpc.WalletBalanceResponse, error)
 }
 
@@ -277,6 +280,11 @@ func (c *client) EstimateRouteFee(ctx context.Context, publicKey string) (*route
 	return resp, nil
 }
 
+// GetChanInfo returns the latest authenticated network announcement for the given channel.
+func (c *client) GetChanInfo(ctx context.Context, channelID uint64) (*lnrpc.ChannelEdge, error) {
+	return c.ln.GetChanInfo(ctx, &lnrpc.ChanInfoRequest{ChanId: channelID})
+}
+
 // GetInfo returns general information concerning the lightning node.
 func (c *client) GetInfo(ctx context.Context) (*lnrpc.GetInfoResponse, error) {
 	return c.ln.GetInfo(ctx, &lnrpc.GetInfoRequest{})
@@ -293,9 +301,15 @@ func (c *client) ListChannels(ctx context.Context) ([]*lnrpc.Channel, error) {
 }
 
 // ListForwards returns list of successful HTLC forwarding events.
-func (c *client) ListForwards(ctx context.Context, startTime uint64, indexOffset uint32) (*lnrpc.ForwardingHistoryResponse, error) {
+func (c *client) ListForwards(
+	ctx context.Context,
+	startTime,
+	endTime uint64,
+	indexOffset uint32,
+) (*lnrpc.ForwardingHistoryResponse, error) {
 	return c.ln.ForwardingHistory(ctx, &lnrpc.ForwardingHistoryRequest{
 		StartTime:       startTime,
+		EndTime:         endTime,
 		IndexOffset:     indexOffset,
 		NumMaxEvents:    MaxForwardingEvents,
 		PeerAliasLookup: false,
@@ -322,8 +336,64 @@ func (c *client) QueryRoute(ctx context.Context, publicKey string) (*lnrpc.Query
 	})
 }
 
+// UpdateChannelPolicy updates the fee schedule and channel policies for a particular channel.
+func (c *client) UpdateChannelPolicy(ctx context.Context, channelPoint string, feeRatePPM, maxHTLC uint64) error {
+	chanPoint, err := ParseChannelPoint(channelPoint)
+	if err != nil {
+		return err
+	}
+
+	req := &lnrpc.PolicyUpdateRequest{
+		Scope: &lnrpc.PolicyUpdateRequest_ChanPoint{
+			ChanPoint: chanPoint,
+		},
+		FeeRatePpm:  uint32(feeRatePPM),
+		MaxHtlcMsat: maxHTLC,
+	}
+	resp, err := c.ln.UpdateChannelPolicy(ctx, req)
+	if err != nil {
+		return errors.Wrap(err, "updating channel policy")
+	}
+
+	if len(resp.FailedUpdates) > 0 {
+		return errors.New(resp.FailedUpdates[0].UpdateError)
+	}
+
+	return nil
+}
+
 // WalletBalance returns confirmed/unconfirmed and the total number of UTXOs under control of the
 // wallet.
 func (c *client) WalletBalance(ctx context.Context, minConf int32) (*lnrpc.WalletBalanceResponse, error) {
 	return c.ln.WalletBalance(ctx, &lnrpc.WalletBalanceRequest{MinConfs: minConf})
+}
+
+// ParseChannelPoint parses a channel point string into the object used by LND.
+func ParseChannelPoint(channelPoint string) (*lnrpc.ChannelPoint, error) {
+	txID, outpoint, ok := strings.Cut(channelPoint, ":")
+	if !ok {
+		return nil, errors.New("invalid format")
+	}
+
+	if txID == "" {
+		return nil, errors.New("invalid transaction ID")
+	}
+
+	if outpoint == "" {
+		return nil, errors.New("invalid outpoint index")
+	}
+
+	outputIndex, err := strconv.ParseUint(outpoint, 10, 32)
+	if err != nil {
+		return nil, errors.Wrap(err, "parsing outpoint index")
+	}
+
+	chanPoint := &lnrpc.ChannelPoint{
+		FundingTxid: &lnrpc.ChannelPoint_FundingTxidStr{
+			FundingTxidStr: txID,
+		},
+		OutputIndex: uint32(outputIndex),
+	}
+
+	return chanPoint, nil
 }

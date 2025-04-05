@@ -21,11 +21,13 @@ lncli bakemacaroon --save_to hydrus.macaroon \
 	uri:/lnrpc.Lightning/DescribeGraph \
 	uri:/walletrpc.WalletKit/EstimateTxFee \
 	uri:/routerrpc.Router/EstimateRouteFee \
+	uri:/lnrpc.Lightning/GetChanInfo \
 	uri:/lnrpc.Lightning/GetInfo \
 	uri:/lnrpc.Lightning/ListChannels \
 	uri:/lnrpc.Lightning/ListForwards \
 	uri:/lnrpc.Lightning/ListPeers \
 	uri:/lnrpc.Lightning/QueryRoute \
+	uri:/lnrpc.Lightning/UpdateChannelPolicy \
 	uri:/lnrpc.Lightning/WalletBalance
 ```
 
@@ -101,9 +103,15 @@ lncli bakemacaroon --save_to hydrus.macaroon \
 |------|-------------|
 | `agent.heuristic_weights.close.capacity` | Channel capacity |
 | `agent.heuristic_weights.close.active` | Channel status |
-| `agent.heuristic_weights.close.num_forwards` | Number of forwards weight |
+| `agent.heuristic_weights.close.num_forwards` | Weight for the number of forwards the channel has routed |
 | `agent.heuristic_weights.close.forwards_amount` | Total amount forwarded weight |
 | `agent.heuristic_weights.close.fees` | Fees collected weight |
 | `agent.heuristic_weights.close.block_height` | Opening transaction block height weight |
 | `agent.heuristic_weights.close.ping_time` | Ping time to the peer node |
 | `agent.heuristic_weights.close.flap_count` | The number of times we have recorded the peer going offline or coming online |
+
+##### Routing policies
+
+| Name | Description |
+|------|-------------|
+| `agent.routing_policies.forwards.activity_period` | Time period for the forwards that are considered to adjust the channels routing policies |

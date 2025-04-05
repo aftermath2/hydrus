@@ -72,7 +72,7 @@ func TestManagerClose(t *testing.T) {
 
 	ctx := t.Context()
 	channelPoint := "e5b8ccc43b4eea6e2664a843e27d82c6d71d2885e7aef73777dd35c737c1d7bc:1"
-	chanPoint, err := parseChannelPoint(channelPoint)
+	chanPoint, err := lightning.ParseChannelPoint(channelPoint)
 	assert.NoError(t, err)
 
 	config := config.ChannelManager{MaxSatvB: 10}
@@ -103,62 +103,19 @@ func TestManagerClose(t *testing.T) {
 	}
 }
 
-func TestParseChannelPoint(t *testing.T) {
-	tests := []struct {
-		name         string
-		channelPoint string
-		expected     *lnrpc.ChannelPoint
-		fail         bool
-	}{
-		{
-			name:         "Valid channel point",
-			channelPoint: "00000000000000000000000000000001:123456789",
-			expected: &lnrpc.ChannelPoint{
-				FundingTxid: &lnrpc.ChannelPoint_FundingTxidStr{FundingTxidStr: "00000000000000000000000000000001"},
-				OutputIndex: 123456789,
-			},
-			fail: false,
-		},
-		{
-			name:         "Missing colon",
-			channelPoint: "0123456789abcdef0123456789abcdef0123456789abc",
-			fail:         true,
-		},
-		{
-			name:         "Invalid output index",
-			channelPoint: "0123456789abcdef0123456789abcdef0123456789abc:notANumber",
-			fail:         true,
-		},
-		{
-			name:         "Empty input",
-			channelPoint: "",
-			fail:         true,
-		},
-		{
-			name:         "Leading colon",
-			channelPoint: ":123456789",
-			fail:         true,
-		},
-		{
-			name:         "Trailing colon",
-			channelPoint: "0123456789abcdef0123456789abcd:",
-			fail:         true,
-		},
-	}
+func TestManagerUpdatePolicy(t *testing.T) {
+	ctx := t.Context()
+	config := config.ChannelManager{}
+	channelPoint := "e5b8ccc43b4eea6e2664a843e27d82c6d71d2885e7aef73777dd35c737c1d7bc:1"
+	feeRatePPM := uint64(20)
+	maxHTLC := uint64(1_000_000)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseChannelPoint(tt.channelPoint)
-			if tt.fail {
-				assert.Error(t, err)
-				return
-			}
+	lndMock := lightning.NewClientMock()
+	lndMock.On("UpdateChannelPolicy", ctx, channelPoint, feeRatePPM, maxHTLC).Return(nil)
+	manager := NewManager(config, lndMock)
 
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expected.FundingTxid, got.FundingTxid)
-			assert.Equal(t, tt.expected.OutputIndex, got.OutputIndex)
-		})
-	}
+	err := manager.UpdatePolicy(ctx, channelPoint, feeRatePPM, maxHTLC)
+	assert.NoError(t, err)
 }
 
 type mockStream struct{}

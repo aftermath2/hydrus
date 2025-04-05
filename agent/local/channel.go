@@ -33,6 +33,7 @@ type Channel struct {
 	Capacity        uint64 `json:"capacity,omitempty"`
 	NumForwards     uint64 `json:"num_forwards,omitempty"`
 	ForwardsAmount  uint64 `json:"forwards_amount,omitempty"`
+	LocalBalance    uint64 `json:"local_balance,omitempty"`
 	Fees            uint64 `json:"fees,omitempty"`
 	PingTime        int64  `json:"ping_time,omitempty"`
 	FlapCount       int32  `json:"flap_count,omitempty"`
@@ -47,8 +48,8 @@ func getChannels(
 	peers []*lnrpc.Peer,
 ) (Channels, error) {
 	oneMonthAgo := uint64(time.Now().Add(-oneMonth).Unix())
-	forwards := make([]*lnrpc.ForwardingEvent, 0)
-	if err := listForwards(ctx, lnd, &forwards, oneMonthAgo, 0); err != nil {
+	forwards, err := ListForwards(ctx, lnd, oneMonthAgo, 0)
+	if err != nil {
 		return Channels{}, err
 	}
 
@@ -71,6 +72,7 @@ func getChannels(
 			Capacity:        uint64(channel.Capacity),
 			NumForwards:     numForwards,
 			ForwardsAmount:  forwardsAmount,
+			LocalBalance:    uint64(channel.LocalBalance),
 			Fees:            fees,
 			RemotePublicKey: channel.RemotePubkey,
 			PingTime:        pingTime,
@@ -84,26 +86,33 @@ func getChannels(
 	return Channels{List: chans, Heuristics: *heuristics}, nil
 }
 
-func listForwards(
+// ListForwards gets all channels forwards by paginating over LND's ListForwards RPC.
+func ListForwards(
 	ctx context.Context,
 	lnd lightning.Client,
-	events *[]*lnrpc.ForwardingEvent,
 	startTime uint64,
 	offset uint32,
-) error {
-	forwards, err := lnd.ListForwards(ctx, startTime, offset)
-	if err != nil {
-		return err
+) ([]*lnrpc.ForwardingEvent, error) {
+	events := make([]*lnrpc.ForwardingEvent, 0)
+	now := uint64(time.Now().Unix())
+
+	for {
+		forwards, err := lnd.ListForwards(ctx, startTime, now, offset)
+		if err != nil {
+			return nil, err
+		}
+
+		events = append(events, forwards.ForwardingEvents...)
+
+		// 50k is the maximum number of events we are getting per request
+		if len(forwards.ForwardingEvents) != lightning.MaxForwardingEvents {
+			break
+		}
+
+		offset = forwards.LastOffsetIndex
 	}
 
-	*events = append(*events, forwards.ForwardingEvents...)
-
-	// 50k is the maximum number of events we are getting per request
-	if len(forwards.ForwardingEvents) == lightning.MaxForwardingEvents && forwards.LastOffsetIndex != offset {
-		return listForwards(ctx, lnd, events, startTime, forwards.LastOffsetIndex)
-	}
-
-	return nil
+	return events, nil
 }
 
 func getForwardsInfo(channel *lnrpc.Channel, forwards []*lnrpc.ForwardingEvent) (uint64, uint64, uint64) {

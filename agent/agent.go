@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/aftermath2/hydrus/agent/local"
 	"github.com/aftermath2/hydrus/channel"
@@ -11,6 +12,7 @@ import (
 	"github.com/aftermath2/hydrus/lightning"
 	"github.com/aftermath2/hydrus/logger"
 
+	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/pkg/errors"
 )
 
@@ -202,6 +204,126 @@ func (a *agent) selectChannels(localNode local.Node, candidates []channelCandida
 	}
 
 	return channels
+}
+
+func (a *agent) updatePolicies(ctx context.Context, localNode local.Node) error {
+	startTime := uint64(time.Now().Add(-a.config.RoutingPolicies.ActivityPeriod).Unix())
+	forwards, err := local.ListForwards(ctx, a.lnd, startTime, 0)
+	if err != nil {
+		return err
+	}
+
+	for _, channel := range localNode.Channels.List {
+		policy, err := getChannelPolicy(ctx, a.lnd, localNode.PublicKey, channel)
+		if err != nil {
+			a.logger.Error(err)
+			continue
+		}
+
+		forwardsAmountIn := uint64(0)
+		forwardsAmountOut := uint64(0)
+		for _, forward := range forwards {
+			if channel.ID == forward.ChanIdIn {
+				forwardsAmountIn += forward.AmtIn
+			}
+			if channel.ID == forward.ChanIdOut {
+				forwardsAmountOut += forward.AmtOut
+			}
+		}
+
+		feeRatePPM := uint64(policy.FeeRateMilliMsat)
+		newFeeRatePPM := calcNewFeeRate(channel, feeRatePPM, forwardsAmountIn, forwardsAmountOut)
+		newMaxHTLC := calcNewMaxHTLC(channel)
+
+		// No changes required, skip
+		if newFeeRatePPM == feeRatePPM && newMaxHTLC == policy.MaxHtlcMsat {
+			a.logger.Infof("Channel %q requires no changes, skipping", channel.Point)
+			continue
+		}
+
+		a.logger.Infof("Updating %q channel policies. Fee rate: %d ppm. Max HTLC: %d",
+			channel.Point,
+			newFeeRatePPM,
+			newMaxHTLC,
+		)
+
+		if a.config.DryRun {
+			continue
+		}
+
+		if err := a.channelManager.UpdatePolicy(ctx, channel.Point, newFeeRatePPM, newMaxHTLC); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func getChannelPolicy(
+	ctx context.Context,
+	lnd lightning.Client,
+	publicKey string,
+	channel local.Channel,
+) (*lnrpc.RoutingPolicy, error) {
+	chanInfo, err := lnd.GetChanInfo(ctx, channel.ID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getting %q channel info", channel.Point)
+	}
+
+	if chanInfo.Node1Pub == publicKey {
+		return chanInfo.Node1Policy, nil
+	}
+	return chanInfo.Node2Policy, nil
+}
+
+func calcNewFeeRate(channel local.Channel, feeRatePPM, forwardsAmountIn, forwardsAmountOut uint64) uint64 {
+	// If the local balance is lower than 1% of the channel's capacity, set a fee of 2100 ppm
+	if channel.LocalBalance < getPercentage(channel.Capacity, 1) {
+		return 2_100
+	}
+
+	// If local balance is higher than 99% of the channel capacity, set a fee rate of 0
+	if channel.LocalBalance > getPercentage(channel.Capacity, 99) {
+		return 0
+	}
+
+	// If there were no outgoing forwards, decrease the fee rate by 10%
+	if forwardsAmountOut == 0 {
+		return feeRatePPM - getPercentage(feeRatePPM, 10)
+	}
+
+	ratio := float64(forwardsAmountOut) / float64(forwardsAmountIn+forwardsAmountOut)
+
+	// If more than half of the payments are forwarded in, decrease the outgoing fee rate by delta
+	if ratio < 0.5 {
+		delta := float64(feeRatePPM) * (0.5 - ratio)
+		return feeRatePPM - uint64(delta)
+	}
+
+	// If more than half of the payments are forwarded out, increase the outgoing fee rate by delta
+	if ratio > 0.5 {
+		delta := float64(feeRatePPM) * (ratio - 0.5)
+		return feeRatePPM + uint64(delta)
+	}
+
+	return feeRatePPM
+}
+
+func calcNewMaxHTLC(channel local.Channel) uint64 {
+	if channel.LocalBalance < 2 {
+		return 1_000
+	}
+
+	// Leave a buffer of 20% of the local balance to avoid running out of liquidity and starting to fail
+	// payments before the next update
+	newMaxHTLC := getPercentage(channel.LocalBalance, 80)
+	return newMaxHTLC * 1000
+}
+
+// getPercentage returns the specified percent of value.
+func getPercentage(value, percent uint64) uint64 {
+	result := (float64(value) / 100.0) * float64(percent)
+	return uint64(result)
 }
 
 // skipOpen returns true and a message if there are no new channels required.

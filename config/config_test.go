@@ -79,13 +79,28 @@ func TestValidate(t *testing.T) {
 			fail:  true,
 		},
 		{
-			name:  "Negative heuristic weight",
+			name:  "Negative open heuristic weight",
 			setup: func(c *Config) { c.Agent.HeuristicWeights.Open.Channels.BaseFee = -1 },
 			fail:  true,
 		},
 		{
-			name:  "Heuristic weight over one",
+			name:  "Open heuristic weight over one",
 			setup: func(c *Config) { c.Agent.HeuristicWeights.Open.Channels.FeeRate = 2 },
+			fail:  true,
+		},
+		{
+			name:  "Negative close heuristic weight",
+			setup: func(c *Config) { c.Agent.HeuristicWeights.Close.BlockHeight = -1 },
+			fail:  true,
+		},
+		{
+			name:  "Close heuristic weight over one",
+			setup: func(c *Config) { c.Agent.HeuristicWeights.Close.Fees = 2 },
+			fail:  true,
+		},
+		{
+			name:  "Routing policies activity period too short",
+			setup: func(c *Config) { c.Agent.RoutingPolicies.ActivityPeriod = time.Second },
 			fail:  true,
 		},
 		{
@@ -98,6 +113,7 @@ func TestValidate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Config{}
+			c.setDefaults()
 			if tt.setup != nil {
 				tt.setup(c)
 			}
@@ -124,6 +140,7 @@ func validConfig(c *Config) {
 	c.Agent.HeuristicWeights.Close = DefaultCloseWeights
 	c.Lightning.RPC.MacaroonPath = "./testdata/invoice.macaroon"
 	c.Lightning.RPC.TLSCertPath = "./testdata/tls.cert"
+	c.Agent.RoutingPolicies.ActivityPeriod = time.Hour * 24
 }
 
 func TestSetDefaults(t *testing.T) {
@@ -141,6 +158,7 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(t, uint64(50), config.Agent.ChannelManager.MaxSatvB)
 	assert.Equal(t, DefaultOpenWeights, config.Agent.HeuristicWeights.Open)
 	assert.Equal(t, DefaultCloseWeights, config.Agent.HeuristicWeights.Close)
+	assert.Equal(t, time.Duration(time.Hour*24), config.Agent.RoutingPolicies.ActivityPeriod)
 	assert.Equal(t, time.Duration(time.Second*30), config.Lightning.RPC.Timeout)
 	assert.Equal(t, "info", config.Logging.Level)
 }

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"cmp"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -66,6 +67,7 @@ type Agent struct {
 	Keeplist          []string          `yaml:"keeplist"`
 	ChannelManager    ChannelManager    `yaml:"channel_manager"`
 	HeuristicWeights  HeuristicsWeights `yaml:"heuristic_weights"`
+	RoutingPolicies   RoutingPolicies   `yaml:"routing_policies"`
 	AllocationPercent uint64            `yaml:"allocation_percent"`
 	MinBatchSize      uint64            `yaml:"min_batch_size"`
 	MinChannels       uint64            `yaml:"min_channels"`
@@ -129,6 +131,11 @@ type ChannelsWeights struct {
 	BlockHeight    float64 `yaml:"block_height"`
 }
 
+// RoutingPolicies configuration.
+type RoutingPolicies struct {
+	ActivityPeriod time.Duration `yaml:"activity_period"`
+}
+
 // Lightning configuration.
 type Lightning struct {
 	RPC RPC `yaml:"rpc"`
@@ -149,15 +156,13 @@ type RPC struct {
 
 // Load returns a configuration object loaded from a file.
 func Load(path string) (*Config, error) {
+	path = cmp.Or(path, os.Getenv("HYDRUS_CONFIG"))
 	if path == "" {
-		path = os.Getenv("HYDRUS_CONFIG")
-		if path == "" {
-			dir, err := os.UserHomeDir()
-			if err != nil {
-				return nil, errors.Wrap(err, "getting home directory")
-			}
-			path = filepath.Join(dir, "hydrus.yml")
+		dir, err := os.UserHomeDir()
+		if err != nil {
+			return nil, errors.Wrap(err, "getting home directory")
 		}
+		path = filepath.Join(dir, "hydrus.yml")
 	}
 
 	f, err := os.OpenFile(path, os.O_RDONLY, 0o600)
@@ -243,6 +248,10 @@ func (c *Config) Validate() error {
 		return err
 	}
 
+	if c.Agent.RoutingPolicies.ActivityPeriod < time.Hour {
+		return errors.New("routing policies activity period must be longer than an hour")
+	}
+
 	if _, err := credentials.NewClientTLSFromFile(c.Lightning.RPC.TLSCertPath, ""); err != nil {
 		return errors.Wrap(err, "invalid tls certificate path")
 	}
@@ -303,6 +312,10 @@ func (c *Config) setDefaults() {
 
 	if c.Agent.HeuristicWeights.Close == (CloseWeights{}) {
 		c.Agent.HeuristicWeights.Close = DefaultCloseWeights
+	}
+
+	if c.Agent.RoutingPolicies.ActivityPeriod == 0 {
+		c.Agent.RoutingPolicies.ActivityPeriod = time.Hour * 24
 	}
 
 	if c.Lightning.RPC.Timeout == 0 {

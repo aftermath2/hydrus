@@ -72,6 +72,12 @@ func (c *ClientMock) EstimateRouteFee(ctx context.Context, publicKey string) (*r
 	return mockReturn[*routerrpc.RouteFeeResponse](args)
 }
 
+// GetChanInfo mock.
+func (c *ClientMock) GetChanInfo(ctx context.Context, channelID uint64) (*lnrpc.ChannelEdge, error) {
+	args := c.Called(ctx, channelID)
+	return mockReturn[*lnrpc.ChannelEdge](args)
+}
+
 // GetInfo mock.
 func (c *ClientMock) GetInfo(ctx context.Context) (*lnrpc.GetInfoResponse, error) {
 	args := c.Called(ctx)
@@ -85,8 +91,13 @@ func (c *ClientMock) ListChannels(ctx context.Context) ([]*lnrpc.Channel, error)
 }
 
 // ListForwards mock.
-func (c *ClientMock) ListForwards(ctx context.Context, startTime uint64, indexOffset uint32) (*lnrpc.ForwardingHistoryResponse, error) {
-	args := c.Called(ctx, startTime, indexOffset)
+func (c *ClientMock) ListForwards(
+	ctx context.Context,
+	startTime,
+	endTime uint64,
+	indexOffset uint32,
+) (*lnrpc.ForwardingHistoryResponse, error) {
+	args := c.Called(ctx, startTime, endTime, indexOffset)
 	return mockReturn[*lnrpc.ForwardingHistoryResponse](args)
 }
 
@@ -106,6 +117,12 @@ func (c *ClientMock) QueryRoute(ctx context.Context, publicKey string) (*lnrpc.Q
 func (c *ClientMock) WalletBalance(ctx context.Context, minConf int32) (*lnrpc.WalletBalanceResponse, error) {
 	args := c.Called(ctx, minConf)
 	return mockReturn[*lnrpc.WalletBalanceResponse](args)
+}
+
+// UpdateChannelPolicy mock.
+func (c *ClientMock) UpdateChannelPolicy(ctx context.Context, channelPoint string, feeRatePPM, maxHTLC uint64) error {
+	args := c.Called(ctx, channelPoint, feeRatePPM, maxHTLC)
+	return args.Error(0)
 }
 
 func mockReturn[T any](args mock.Arguments) (T, error) {

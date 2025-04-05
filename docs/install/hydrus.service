@@ -1,0 +1,45 @@
+[Unit]
+Description=Hydrus
+Documentation=https://github.com/aftermath2/hydrus/blob/master/README.md
+Requires=lnd.service
+After=lnd.service
+
+[Service]
+ExecStart=/usr/local/bin/hydrus
+Restart=on-failure
+RestartSec=30s
+StartLimitInterval=5min
+StartLimitBurst=3
+User=hydrus
+Group=hydrus
+
+# https://www.freedesktop.org/software/systemd/man/systemd.exec.html#Sandboxing
+LockPersonality=true
+MemoryDenyWriteExecute=true
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+PrivateUsers=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+RemoveIPC=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~add_key clone3 get_mempolicy kcmp keyctl mbind move_pages name_to_handle_at personality process_vm_readv process_vm_writev request_key set_mempolicy setns unshare userfaultfd
+
+# May have to be modified if lnd is somewhere else than localhost
+IPAddressAllow=127.0.0.1/32 ::1/128
+IPAddressDeny=any
+
+[Install]
+WantedBy=multi-user.target

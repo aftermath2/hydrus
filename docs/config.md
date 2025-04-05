@@ -114,4 +114,4 @@ lncli bakemacaroon --save_to hydrus.macaroon \
 
 | Name | Type | Description |
 |------|------|-------------|
-| `agent.routing_policies.forwards.activity_period` | time | Time period for the forwards that are considered to adjust the channels routing policies (12h, 1d, 1w) |
+| `agent.routing_policies.forwards.activity_period` | time | Time period for the forwards that are considered to adjust the channels routing policies (30m, 1h, 24h, 48h) |

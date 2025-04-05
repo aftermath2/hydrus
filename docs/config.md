@@ -53,65 +53,65 @@ lncli bakemacaroon --save_to hydrus.macaroon \
 
 ### Agent
 
-| Name | Description |
-|------|-------------|
-| `agent.dry_run` | Enable dry-run mode to run without making actual changes |
-| `agent.blocklist` | A list of public keys to discard when opening channels |
-| `agent.keeplist` | A list of public keys to keep when closing channels |
-| `agent.allocation_percent` | Wallet balance percentage allocation |
-| `agent.allow_force_closes` | Enable channels force-closing |
-| `agent.target_conf` | Target confirmation blocks for channel operations |
-| `agent.min_batch_size` | Minimum batch size. Used to open at least n channels per transaction |
-| `agent.min_channels` | Minimum number of channels required |
-| `agent.max_channels` | Maximum number of channels allowed |
-| `agent.min_channel_size` | Minimum channel funding amount |
-| `agent.max_channel_size` | Maximum channel funding amount |
+| Name | Type | Description |
+|------|------|-------------|
+| `agent.dry_run` | boolean | Enable dry-run mode to run without making actual changes |
+| `agent.blocklist` | []string | A list of public keys to discard when opening channels |
+| `agent.keeplist` | []string | A list of public keys to keep when closing channels |
+| `agent.allocation_percent` | int | Wallet balance percentage allocation |
+| `agent.allow_force_closes` | boolean | Enable channels force-closing |
+| `agent.target_conf` | int | Target confirmation blocks for channel operations |
+| `agent.min_batch_size` | int | Minimum batch size. Used to open at least n channels per transaction |
+| `agent.min_channels` | int | Minimum number of channels required |
+| `agent.max_channels` | int | Maximum number of channels allowed |
+| `agent.min_channel_size` | int | Minimum channel funding amount |
+| `agent.max_channel_size` | int | Maximum channel funding amount |
 
 #### Channel manager
 
-| Name | Description |
-|------|-------------|
-| `agent.channel_manager.max_sat_vb` | Maximum number of satoshis per virtual byte to create a transaction |
-| `agent.channel_manager.min_conf` | Minimum confirmations required to spend a UTXO |
-| `agent.channel_manager.base_fee_msat` | New channels initial base fee in milli-satoshis |
-| `agent.channel_manager.fee_rate_ppm` | New channel initial fee rate in parts per million (ppm) |
+| Name | Type | Description |
+|------|------|-------------|
+| `agent.channel_manager.max_sat_vb` | int | Maximum number of satoshis per virtual byte to create a transaction |
+| `agent.channel_manager.min_conf` | int | Minimum confirmations required to spend a UTXO |
+| `agent.channel_manager.base_fee_msat` | int | New channels initial base fee in milli-satoshis |
+| `agent.channel_manager.fee_rate_ppm` | int | New channel initial fee rate in parts per million (ppm) |
 
 #### Heuristics
 
 ##### Open
 
-| Name | Description |
-|------|-------------|
-| `agent.heuristic_weights.open.capacity` | Nodes capacity weight |
-| `agent.heuristic_weights.open.features` | Nodes features weight |
-| `agent.heuristic_weights.open.hybrid` | Weight for nodes addresses types |
-| `agent.heuristic_weights.open.centrality.degree` | Weight for the degree centrality of the node in the network |
-| `agent.heuristic_weights.open.centrality.closeness` | Weight for the closeness centrality of the node |
-| `agent.heuristic_weights.open.centrality.betweenness` | Weight for the betweenness centrality of the node |
-| `agent.heuristic_weights.open.centrality.eigenvector` | Weight for the eigenvector centrality of the node |
-| `agent.heuristic_weights.open.channels.base_fee` | Channels base fees weight |
-| `agent.heuristic_weights.open.channels.fee_rate` | Channels fee rate weight |
-| `agent.heuristic_weights.open.channels.inbound_base_fee` | Inbound base fee weight |
-| `agent.heuristic_weights.open.channels.inbound_fee_rate` | Inbound fee rate weight |
-| `agent.heuristic_weights.open.channels.min_htlc` | Minimum HTLC value weight |
-| `agent.heuristic_weights.open.channels.max_htlc` | Maximum HTLC value allowed weight |
-| `agent.heuristic_weights.open.channels.block_height` | Channels block height weight |
+| Name | Type | Description |
+|------|------|-------------|
+| `agent.heuristic_weights.open.capacity` | float | Nodes capacity weight |
+| `agent.heuristic_weights.open.features` | float | Nodes features weight |
+| `agent.heuristic_weights.open.hybrid` | float | Weight for nodes addresses types |
+| `agent.heuristic_weights.open.centrality.degree` | float | Weight for the degree centrality of the node in the network |
+| `agent.heuristic_weights.open.centrality.closeness` | float | Weight for the closeness centrality of the node |
+| `agent.heuristic_weights.open.centrality.betweenness` | float | Weight for the betweenness centrality of the node |
+| `agent.heuristic_weights.open.centrality.eigenvector` | float | Weight for the eigenvector centrality of the node |
+| `agent.heuristic_weights.open.channels.base_fee` | float | Channels base fees weight |
+| `agent.heuristic_weights.open.channels.fee_rate` | float | Channels fee rate weight |
+| `agent.heuristic_weights.open.channels.inbound_base_fee` | float | Inbound base fee weight |
+| `agent.heuristic_weights.open.channels.inbound_fee_rate` | float | Inbound fee rate weight |
+| `agent.heuristic_weights.open.channels.min_htlc` | float | Minimum HTLC value weight |
+| `agent.heuristic_weights.open.channels.max_htlc` | float | Maximum HTLC value allowed weight |
+| `agent.heuristic_weights.open.channels.block_height` | float | Channels block height weight |
 
 ##### Close
 
-| Name | Description |
-|------|-------------|
-| `agent.heuristic_weights.close.capacity` | Channel capacity |
-| `agent.heuristic_weights.close.active` | Channel status |
-| `agent.heuristic_weights.close.num_forwards` | Weight for the number of forwards the channel has routed |
-| `agent.heuristic_weights.close.forwards_amount` | Total amount forwarded weight |
-| `agent.heuristic_weights.close.fees` | Fees collected weight |
-| `agent.heuristic_weights.close.block_height` | Opening transaction block height weight |
-| `agent.heuristic_weights.close.ping_time` | Ping time to the peer node |
-| `agent.heuristic_weights.close.flap_count` | The number of times we have recorded the peer going offline or coming online |
+| Name | Type | Description |
+|------|------|-------------|
+| `agent.heuristic_weights.close.capacity` | float | Channel capacity |
+| `agent.heuristic_weights.close.active` | float | Channel status |
+| `agent.heuristic_weights.close.num_forwards` | float | Weight for the number of forwards the channel has routed |
+| `agent.heuristic_weights.close.forwards_amount` | float | Total amount forwarded weight |
+| `agent.heuristic_weights.close.fees` | float | Fees collected weight |
+| `agent.heuristic_weights.close.block_height` | float | Opening transaction block height weight |
+| `agent.heuristic_weights.close.ping_time` | float | Ping time to the peer node |
+| `agent.heuristic_weights.close.flap_count` | float | The number of times we have recorded the peer going offline or coming online |
 
 ##### Routing policies
 
-| Name | Description |
-|------|-------------|
-| `agent.routing_policies.forwards.activity_period` | Time period for the forwards that are considered to adjust the channels routing policies |
+| Name | Type | Description |
+|------|------|-------------|
+| `agent.routing_policies.forwards.activity_period` | time | Time period for the forwards that are considered to adjust the channels routing policies (12h, 1d, 1w) |

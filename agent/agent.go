@@ -16,10 +16,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Agent is in charge of looking new nodes to open channels to and closing channel that are not performing
-// well.
+// Agent is in charge of looking for new nodes to open channels to, closing channels that are not performing
+// well, and updating the routing policies of the channels that are maintained.
 type Agent interface {
-	Start(ctx context.Context) error
+	CloseChannels(ctx context.Context, localNode local.Node) error
+	OpenChannels(ctx context.Context, localNode local.Node) error
+	UpdatePolicies(ctx context.Context, localNode local.Node) error
 }
 
 type agent struct {
@@ -39,36 +41,9 @@ func New(config config.Agent, lnd lightning.Client) Agent {
 	}
 }
 
-func (a *agent) Start(ctx context.Context) error {
-	localNode, err := local.GetNode(ctx, a.config, a.lnd)
-	if err != nil {
-		return err
-	}
-	a.logger.Debugf("Local node: %s", localNode)
-
-	if localNode.SatvB > a.config.ChannelManager.MaxSatvB {
-		a.logger.Infof(
-			"Skipping... The estimated transaction fee per virtual byte (%d) is higher than the maximum (%d)",
-			localNode.SatvB,
-			a.config.ChannelManager.MaxSatvB,
-		)
-		return nil
-	}
-
-	a.logger.Info("Evaluating channels to close")
-	if err := a.closeChannels(ctx, localNode); err != nil {
-		return err
-	}
-
-	a.logger.Info("Evaluating channels to open")
-	if err := a.openChannels(ctx, localNode); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (a *agent) closeChannels(ctx context.Context, localNode local.Node) error {
+// CloseChannels evaluates the performance of local channels and closes those that do not meet minimum
+// requirements.
+func (a *agent) CloseChannels(ctx context.Context, localNode local.Node) error {
 	if localNode.MaxCloseChannels == 0 {
 		a.logger.Info("Too few channels to consider closing one, skipping channels closure")
 		return nil
@@ -101,7 +76,9 @@ func (a *agent) closeChannels(ctx context.Context, localNode local.Node) error {
 	return a.channelManager.Close(ctx, req)
 }
 
-func (a *agent) openChannels(ctx context.Context, localNode local.Node) error {
+// OpenChannels evaluates all nodes in the network graph, selects a list of candidates and creates a batching
+// transaction opening channels to them.
+func (a *agent) OpenChannels(ctx context.Context, localNode local.Node) error {
 	if err := skipOpen(a.config, localNode); err != nil {
 		a.logger.Infof("Skipping... %v", err)
 		return nil
@@ -206,7 +183,9 @@ func (a *agent) selectChannels(localNode local.Node, candidates []channelCandida
 	return channels
 }
 
-func (a *agent) updatePolicies(ctx context.Context, localNode local.Node) error {
+// UpdatePolicies evaluates the state of all local channels and updates their routing policies to maximize
+// profits and routing reliability.
+func (a *agent) UpdatePolicies(ctx context.Context, localNode local.Node) error {
 	startTime := uint64(time.Now().Add(-a.config.RoutingPolicies.ActivityPeriod).Unix())
 	forwards, err := local.ListForwards(ctx, a.lnd, startTime, 0)
 	if err != nil {

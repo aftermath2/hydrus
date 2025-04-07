@@ -14,51 +14,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestStart(t *testing.T) {
-	tests := []struct {
-		desc   string
-		config config.Agent
-	}{
-		{
-			desc: "Fee too high",
-			config: config.Agent{
-				ChannelManager: config.ChannelManager{
-					MaxSatvB: 1,
-				},
-			},
-		},
-		{
-			desc: "No channel changes",
-			config: config.Agent{
-				AllocationPercent: 100,
-				MinChannels:       0,
-				MaxChannels:       0,
-				MinChannelSize:    1_000_000,
-				TargetConf:        2,
-				ChannelManager: config.ChannelManager{
-					MinConf: 2,
-				},
-				HeuristicWeights: config.HeuristicsWeights{
-					Close: config.DefaultCloseWeights,
-					Open:  config.DefaultOpenWeights,
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			lndMock := lightning.NewClientMock()
-			getNode(t, lndMock, tt.config, 2)
-
-			agent := New(tt.config, lndMock)
-
-			err := agent.Start(t.Context())
-			assert.NoError(t, err)
-		})
-	}
-}
-
 func TestSelectNodes(t *testing.T) {
 	ctx := t.Context()
 	lndMock := lightning.NewClientMock()
@@ -302,7 +257,7 @@ func TestUpdatePolicies(t *testing.T) {
 	lndMock.On("GetChanInfo", ctx, channelID).Return(chanInfoResp, nil)
 	lndMock.On("UpdateChannelPolicy", ctx, channelPoint, expectedFeeRatePPM, expectedMaxHTLCMsat).Return(nil)
 
-	err := agent.updatePolicies(ctx, localNode)
+	err := agent.UpdatePolicies(ctx, localNode)
 	assert.NoError(t, err)
 }
 

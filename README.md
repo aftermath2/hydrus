@@ -16,7 +16,9 @@ To install and configure Hydrus, check out the [install](docs/install/install.md
 
 Hydrus opens channels automatically based on the state of the network graph. It also closes and re-sizes (planned for future releases) existing ones based on their characteristics (status, capacity, age) and past performance (number of forwards, fees collected, uptime and more).
 
-It is completely stateless, uses only the information provided by the lightning daemon RPC API.
+To interact with the agent, Hydrus offers a set of commands to execute all actions in a sequence (`hydrus agent run`) or separately (`hydrus channels` sub-commands). For the full list of commands, check [cli.md](./docs/cli.md).
+
+The agent is completely stateless, uses only the information provided by the lightning daemon RPC API.
 
 ## Channel opening
 
@@ -80,8 +82,8 @@ Channels routing policies are adjusted based on the channel state (capacity, loc
 - If the local balance is lower than 1% of the channel capacity, the fee rate is set to 2,100 ppm to discourage routing thorugh the channel.
 - If the local balance is higher than 99% of the channel capacity, the fee rate is set to 0 ppm to incentivize routing thorugh the channel.
 - If the amount of satoshis forwarded out through the channel is zero, the fee rate is decreased by 10%.
-- If the ratio forwards amount out/in is below 0.5, the fee rate is decreased proportionally to half the ratio.
-- If the ratio forwards amount out/in is above 0.5, the fee rate is increased proportionally to half the ratio.
+- If the ratio forwards amount out/in is below 0.5, the fee rate is decreased proportionally to the ratio.
+- If the ratio forwards amount out/in is above 0.5, the fee rate is increased proportionally to the ratio.
 
 > For example, if the forwards ratio is 0.8, meaning that we are sending more payments than receiving, the fee rate will be increased by 30% (0.8 - 0.5). Similarly, if the forwards ratio is 0.4, the fee rate will be decreased by 0.1% (0.5 - 0.4).
 

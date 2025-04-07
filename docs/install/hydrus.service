@@ -1,11 +1,11 @@
 [Unit]
-Description=Hydrus
+Description=Hydrus - Lightning liquidity management agent
 Documentation=https://github.com/aftermath2/hydrus/blob/master/README.md
 Requires=lnd.service
 After=lnd.service
 
 [Service]
-ExecStart=/usr/local/bin/hydrus
+ExecStart=/usr/local/bin/hydrus agent run
 Restart=on-failure
 RestartSec=30s
 StartLimitInterval=5min

@@ -8,7 +8,7 @@ services:
     container_name: hydrus
     network_mode: service:tor
     restart: on-failure:3
-    command: --nodes_scores
+    command: scores nodes
     volumes:
       - ./hydrus.yml:/etc/hydrus/hydrus.yml
     volumes_from:

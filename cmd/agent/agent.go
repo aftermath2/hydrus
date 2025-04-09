@@ -11,8 +11,7 @@ func NewCmd() *cobra.Command {
 		Short: "Agent operations",
 	}
 
-	cmd.AddCommand(
-		NewRunCmd(),
-	)
+	cmd.AddCommand(NewRunCmd())
+
 	return cmd
 }

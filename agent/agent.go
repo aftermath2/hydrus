@@ -12,6 +12,7 @@ import (
 	"github.com/aftermath2/hydrus/lightning"
 	"github.com/aftermath2/hydrus/logger"
 
+	"github.com/go-co-op/gocron/v2"
 	"github.com/lightningnetwork/lnd/lnrpc"
 	"github.com/pkg/errors"
 )
@@ -19,6 +20,7 @@ import (
 // Agent is in charge of looking for new nodes to open channels to, closing channels that are not performing
 // well, and updating the routing policies of the channels that are maintained.
 type Agent interface {
+	Run(ctx context.Context) error
 	CloseChannels(ctx context.Context, localNode local.Node) error
 	OpenChannels(ctx context.Context, localNode local.Node) error
 	UpdatePolicies(ctx context.Context, localNode local.Node) error
@@ -39,6 +41,82 @@ func New(config config.Agent, lnd lightning.Client) Agent {
 		logger:         logger.New("AGT"),
 		config:         config,
 	}
+}
+
+// Run executes both channels and routing policies tasks in the background on intervals.
+func (a *agent) Run(ctx context.Context) error {
+	scheduler, err := gocron.NewScheduler()
+	if err != nil {
+		return err
+	}
+
+	_, err = scheduler.NewJob(
+		gocron.DurationJob(a.config.Intervals.Channels),
+		gocron.NewTask(a.channelsTask, ctx),
+		gocron.WithStartAt(gocron.WithStartImmediately()),
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = scheduler.NewJob(
+		gocron.DurationJob(a.config.Intervals.RoutingPolicies),
+		gocron.NewTask(a.routingPoliciesTask, ctx),
+		gocron.WithStartAt(gocron.WithStartImmediately()),
+	)
+	if err != nil {
+		return err
+	}
+
+	scheduler.Start()
+
+	select {
+	// Block until the context is cancelled
+	case <-ctx.Done():
+		a.logger.Info("Context canceled, shutting down")
+	}
+
+	return scheduler.Shutdown()
+}
+
+func (a *agent) channelsTask(ctx context.Context) error {
+	logger := logger.New("CHT")
+
+	localNode, err := local.GetNode(ctx, a.config, a.lnd)
+	if err != nil {
+		return err
+	}
+	logger.Debugf("Local node: %s", localNode)
+
+	if localNode.SatvB > a.config.ChannelManager.MaxSatvB {
+		logger.Infof(
+			"Skipping... The estimated transaction fee per virtual byte (%d) is higher than the maximum (%d)",
+			localNode.SatvB,
+			a.config.ChannelManager.MaxSatvB,
+		)
+		return nil
+	}
+
+	logger.Info("Evaluating channels to close")
+	if err := a.CloseChannels(ctx, localNode); err != nil {
+		return err
+	}
+
+	logger.Info("Evaluating channels to open")
+	return a.OpenChannels(ctx, localNode)
+}
+
+func (a *agent) routingPoliciesTask(ctx context.Context) error {
+	logger := logger.New("RPT")
+
+	localNode, err := local.GetNode(ctx, a.config, a.lnd)
+	if err != nil {
+		return err
+	}
+	logger.Debugf("Local node: %s", localNode)
+
+	logger.Info("Updating channels routing policies")
+	return a.UpdatePolicies(ctx, localNode)
 }
 
 // CloseChannels evaluates the performance of local channels and closes those that do not meet minimum
@@ -186,14 +264,19 @@ func (a *agent) selectChannels(localNode local.Node, candidates []channelCandida
 // UpdatePolicies evaluates the state of all local channels and updates their routing policies to maximize
 // profits and routing reliability.
 func (a *agent) UpdatePolicies(ctx context.Context, localNode local.Node) error {
-	startTime := uint64(time.Now().Add(-a.config.RoutingPolicies.ActivityPeriod).Unix())
+	if len(localNode.Channels.List) == 0 {
+		a.logger.Info("The node has no channels, skipping")
+		return nil
+	}
+
+	startTime := uint64(time.Now().Add(-a.config.Intervals.RoutingPolicies).Unix())
 	forwards, err := local.ListForwards(ctx, a.lnd, startTime, 0)
 	if err != nil {
 		return err
 	}
 
-	for _, channel := range localNode.Channels.List {
-		policy, err := getChannelPolicy(ctx, a.lnd, localNode.PublicKey, channel)
+	for _, ch := range localNode.Channels.List {
+		policy, err := getChannelPolicy(ctx, a.lnd, localNode.PublicKey, ch)
 		if err != nil {
 			a.logger.Error(err)
 			continue
@@ -202,26 +285,26 @@ func (a *agent) UpdatePolicies(ctx context.Context, localNode local.Node) error 
 		forwardsAmountIn := uint64(0)
 		forwardsAmountOut := uint64(0)
 		for _, forward := range forwards {
-			if channel.ID == forward.ChanIdIn {
+			if ch.ID == forward.ChanIdIn {
 				forwardsAmountIn += forward.AmtIn
 			}
-			if channel.ID == forward.ChanIdOut {
+			if ch.ID == forward.ChanIdOut {
 				forwardsAmountOut += forward.AmtOut
 			}
 		}
 
 		feeRatePPM := uint64(policy.FeeRateMilliMsat)
-		newFeeRatePPM := calcNewFeeRate(channel, feeRatePPM, forwardsAmountIn, forwardsAmountOut)
-		newMaxHTLC := calcNewMaxHTLC(channel)
+		newFeeRatePPM := calcNewFeeRate(ch, feeRatePPM, forwardsAmountIn, forwardsAmountOut)
+		newMaxHTLC := calcNewMaxHTLC(ch)
 
 		// No changes required, skip
 		if newFeeRatePPM == feeRatePPM && newMaxHTLC == policy.MaxHtlcMsat {
-			a.logger.Infof("Channel %q requires no changes, skipping", channel.Point)
+			a.logger.Infof("Channel %q requires no changes, skipping", ch.Point)
 			continue
 		}
 
 		a.logger.Infof("Updating %q channel policies. Fee rate: %d ppm. Max HTLC: %d",
-			channel.Point,
+			ch.Point,
 			newFeeRatePPM,
 			newMaxHTLC,
 		)
@@ -230,7 +313,14 @@ func (a *agent) UpdatePolicies(ctx context.Context, localNode local.Node) error 
 			continue
 		}
 
-		if err := a.channelManager.UpdatePolicy(ctx, channel.Point, newFeeRatePPM, newMaxHTLC); err != nil {
+		req := channel.UpdatePolicyRequest{
+			ChannelPoint:  ch.Point,
+			BaseFeeMsat:   uint64(policy.FeeBaseMsat),
+			FeeRatePPM:    newFeeRatePPM,
+			MaxHTLCMsat:   newMaxHTLC,
+			TimeLockDelta: uint64(policy.TimeLockDelta),
+		}
+		if err := a.channelManager.UpdatePolicy(ctx, req); err != nil {
 			return err
 		}
 	}

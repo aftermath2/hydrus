@@ -34,6 +34,18 @@ lncli bakemacaroon --save_to hydrus.macaroon \
 > [!Note]
 > Executing Hydrus with the CLI flag `--nodes_scores` only requires `uri:/lnrpc.Lightning/DescribeGraph`.
 
+## Intervals
+
+Hydrus is designed to be executed on a regular basis to keep your node connected to the best peers and close channels that are not performing well. Similarly, routing policies must be updated frequently to manage liquidity efficiently.
+
+This is why the agent has two configurations `intervals.channels` and `intervals.routing_policies` for users to modify and pick the timeframe they are more comfortable with. 
+
+The `agent run` command will execute channels and routing policies adjustments following those intervals forever, blocking the program execution between idle times. 
+
+It is recommended to not run update channels more than once a week, because there isn't much time for the scores to change in a short timeframe, and the agent will end up spending more in fees as the channels opening batches will be smaller. Good timeframes are probably weekly, semi-monthly or monthly.
+
+On the other hand, updating routing policies more than once every hour will cause peers to blacklist the node to avoid spam. Suggested intervals are 3/6/12/24 hours.
+
 ## Options
 
 ### Lightning
@@ -110,8 +122,18 @@ lncli bakemacaroon --save_to hydrus.macaroon \
 | `agent.heuristic_weights.close.ping_time` | float | Ping time to the peer node |
 | `agent.heuristic_weights.close.flap_count` | float | The number of times we have recorded the peer going offline or coming online |
 
+##### Intervals
+
+| Name | Type | Description |
+|------|------|-------------|
+| `agent.intervals.channels` | time | Channels modifications interval |
+| `agent.intervals.routing_policies` | time | Routing policies modifications interval |
+
 ##### Routing policies
 
 | Name | Type | Description |
 |------|------|-------------|
-| `agent.routing_policies.forwards.activity_period` | time | Time period for the forwards that are considered to adjust the channels routing policies (30m, 1h, 24h, 48h) |
+| `agent.routing_policies.forwards.activity_period` | time | Time period for the forwards that are considered to adjust the channels routing policies |
+
+> [!Note]
+> Time values support the units "ns", "µs", "ms", "s", "m", "h".

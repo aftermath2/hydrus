@@ -99,8 +99,8 @@ func TestValidate(t *testing.T) {
 			fail:  true,
 		},
 		{
-			name:  "Routing policies activity period too short",
-			setup: func(c *Config) { c.Agent.RoutingPolicies.ActivityPeriod = time.Second },
+			name:  "Routing policies interval too short",
+			setup: func(c *Config) { c.Agent.Intervals.RoutingPolicies = time.Second },
 			fail:  true,
 		},
 		{
@@ -140,7 +140,8 @@ func validConfig(c *Config) {
 	c.Agent.HeuristicWeights.Close = DefaultCloseWeights
 	c.Lightning.RPC.MacaroonPath = "./testdata/invoice.macaroon"
 	c.Lightning.RPC.TLSCertPath = "./testdata/tls.cert"
-	c.Agent.RoutingPolicies.ActivityPeriod = time.Hour * 24
+	c.Agent.Intervals.Channels = time.Hour * 24
+	c.Agent.Intervals.RoutingPolicies = time.Hour
 }
 
 func TestSetDefaults(t *testing.T) {
@@ -158,7 +159,8 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(t, uint64(50), config.Agent.ChannelManager.MaxSatvB)
 	assert.Equal(t, DefaultOpenWeights, config.Agent.HeuristicWeights.Open)
 	assert.Equal(t, DefaultCloseWeights, config.Agent.HeuristicWeights.Close)
-	assert.Equal(t, time.Duration(time.Hour*24), config.Agent.RoutingPolicies.ActivityPeriod)
+	assert.Equal(t, time.Duration(time.Hour*168), config.Agent.Intervals.Channels)
+	assert.Equal(t, time.Duration(time.Hour*6), config.Agent.Intervals.RoutingPolicies)
 	assert.Equal(t, time.Duration(time.Second*30), config.Lightning.RPC.Timeout)
 	assert.Equal(t, "info", config.Logging.Level)
 }

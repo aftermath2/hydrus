@@ -77,7 +77,7 @@ It will only close channels if the number of them is higher than `agent.min_chan
 
 ## Routing policies
 
-Channels routing policies are adjusted based on the channel state (capacity, local balance) and the amount of satoshis forwarded in the last activity period.
+Channels routing policies are adjusted based on the channel state (capacity, local balance) and the amount of satoshis forwarded in the last activity period (`agent.intervals.routing_policies`).
 
 - If the local balance is lower than 1% of the channel capacity, the fee rate is set to 2,100 ppm to discourage routing thorugh the channel.
 - If the local balance is higher than 99% of the channel capacity, the fee rate is set to 0 ppm to incentivize routing thorugh the channel.

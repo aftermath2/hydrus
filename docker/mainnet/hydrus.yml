@@ -22,8 +22,9 @@ agent:
     min_conf: 1
     base_fee_msat: 1
     fee_rate_ppm: 100
-  routing_policies:
-    activity_period: 24h
+  intervals:
+    channels: 168h
+    routing_policies: 24h
   heuristic_weights:
     open:
       capacity: 1

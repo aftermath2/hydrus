@@ -16,7 +16,7 @@ import (
 // NewUpdateCmd returns a new run command.
 func NewUpdateCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "update",
+		Use:   "updatepolicies",
 		Short: "Evaluate local channels and update their routing policies",
 		RunE: cmd.Run(func(ctx context.Context, config *config.Config, lnd lightning.Client, logger logger.Logger) error {
 			localNode, err := local.GetNode(ctx, config.Agent, lnd)
@@ -25,7 +25,7 @@ func NewUpdateCmd() *cobra.Command {
 			}
 			logger.Debugf("Local node: %s", localNode)
 
-			logger.Info("Evaluating channels to update")
+			logger.Info("Updating channels routing policies")
 			agent := agent.New(config.Agent, lnd)
 			return agent.UpdatePolicies(ctx, localNode)
 		}),

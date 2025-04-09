@@ -246,8 +246,10 @@ func TestUpdatePolicies(t *testing.T) {
 		ChannelId: channelID,
 		Node1Pub:  publicKey,
 		Node1Policy: &lnrpc.RoutingPolicy{
+			FeeBaseMsat:      0,
 			FeeRateMilliMsat: 100,
 			MaxHtlcMsat:      4_600_000_000,
+			TimeLockDelta:    80,
 		},
 	}
 	expectedFeeRatePPM := uint64(108)
@@ -255,7 +257,14 @@ func TestUpdatePolicies(t *testing.T) {
 
 	lndMock.On("ListForwards", ctx, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
 	lndMock.On("GetChanInfo", ctx, channelID).Return(chanInfoResp, nil)
-	lndMock.On("UpdateChannelPolicy", ctx, channelPoint, expectedFeeRatePPM, expectedMaxHTLCMsat).Return(nil)
+	lndMock.On("UpdateChannelPolicy",
+		ctx,
+		channelPoint,
+		uint64(chanInfoResp.Node1Policy.FeeBaseMsat),
+		expectedFeeRatePPM,
+		expectedMaxHTLCMsat,
+		uint64(chanInfoResp.Node1Policy.TimeLockDelta),
+	).Return(nil)
 
 	err := agent.UpdatePolicies(ctx, localNode)
 	assert.NoError(t, err)

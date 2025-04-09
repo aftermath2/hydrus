@@ -107,14 +107,23 @@ func TestManagerUpdatePolicy(t *testing.T) {
 	ctx := t.Context()
 	config := config.ChannelManager{}
 	channelPoint := "e5b8ccc43b4eea6e2664a843e27d82c6d71d2885e7aef73777dd35c737c1d7bc:1"
+	baseFeeMsat := uint64(0)
 	feeRatePPM := uint64(20)
-	maxHTLC := uint64(1_000_000)
+	maxHTLCMsat := uint64(1_000_000)
+	timeLockDelta := uint64(80)
 
 	lndMock := lightning.NewClientMock()
-	lndMock.On("UpdateChannelPolicy", ctx, channelPoint, feeRatePPM, maxHTLC).Return(nil)
+	lndMock.On("UpdateChannelPolicy", ctx, channelPoint, baseFeeMsat, feeRatePPM, maxHTLCMsat, timeLockDelta).Return(nil)
 	manager := NewManager(config, lndMock)
 
-	err := manager.UpdatePolicy(ctx, channelPoint, feeRatePPM, maxHTLC)
+	req := UpdatePolicyRequest{
+		ChannelPoint:  channelPoint,
+		BaseFeeMsat:   baseFeeMsat,
+		FeeRatePPM:    feeRatePPM,
+		MaxHTLCMsat:   maxHTLCMsat,
+		TimeLockDelta: timeLockDelta,
+	}
+	err := manager.UpdatePolicy(ctx, req)
 	assert.NoError(t, err)
 }
 

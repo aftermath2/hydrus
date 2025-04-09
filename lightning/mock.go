@@ -120,8 +120,10 @@ func (c *ClientMock) WalletBalance(ctx context.Context, minConf int32) (*lnrpc.W
 }
 
 // UpdateChannelPolicy mock.
-func (c *ClientMock) UpdateChannelPolicy(ctx context.Context, channelPoint string, feeRatePPM, maxHTLC uint64) error {
-	args := c.Called(ctx, channelPoint, feeRatePPM, maxHTLC)
+func (c *ClientMock) UpdateChannelPolicy(
+	ctx context.Context, channelPoint string, baseFeeMsat, feeRatePPM, maxHTLCMsat, timeLockDelta uint64,
+) error {
+	args := c.Called(ctx, channelPoint, baseFeeMsat, feeRatePPM, maxHTLCMsat, timeLockDelta)
 	return args.Error(0)
 }
 

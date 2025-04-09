@@ -3,6 +3,7 @@ Description=Hydrus timer
 Documentation=https://github.com/aftermath2/hydrus/blob/master/README.md
 
 [Timer]
+Type=oneshot
 OnCalendar=Sat *-*-* 20:00:00
 Unit=hydrus.service
 Persistent=false

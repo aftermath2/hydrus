@@ -28,8 +28,9 @@ agent:
     min_conf: 2
     base_fee_msat: 0
     fee_rate_ppm: 200
-  routing_policies:
-    activity_period: 1d
+  intervals:
+    channels: 168h
+    routing_policies: 24h
   heuristic_weights:
     open:
       # Use 0 to disable the heuristic

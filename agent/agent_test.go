@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestStart(t *testing.T) {
+func TestChannelsTask(t *testing.T) {
 	tests := []struct {
 		desc   string
 		config config.Agent
@@ -51,12 +51,44 @@ func TestStart(t *testing.T) {
 			lndMock := lightning.NewClientMock()
 			getNode(t, lndMock, tt.config, 2)
 
-			agent := New(tt.config, lndMock)
+			agent := agent{
+				config: tt.config,
+				lnd:    lndMock,
+			}
 
-			err := agent.Start(t.Context())
+			err := agent.channelsTask(t.Context())
 			assert.NoError(t, err)
 		})
 	}
+}
+
+func TestRoutingPoliciesTask(t *testing.T) {
+	config := config.Agent{
+		AllocationPercent: 100,
+		MinChannels:       0,
+		MaxChannels:       0,
+		MinChannelSize:    1_000_000,
+		TargetConf:        2,
+		ChannelManager: config.ChannelManager{
+			MinConf: 2,
+		},
+		HeuristicWeights: config.HeuristicsWeights{
+			Close: config.DefaultCloseWeights,
+			Open:  config.DefaultOpenWeights,
+		},
+	}
+
+	lndMock := lightning.NewClientMock()
+	getNode(t, lndMock, config, 2)
+
+	agent := agent{
+		config: config,
+		lnd:    lndMock,
+		logger: logger.New(""),
+	}
+
+	err := agent.routingPoliciesTask(t.Context())
+	assert.NoError(t, err)
 }
 
 func TestSelectNodes(t *testing.T) {
@@ -291,8 +323,10 @@ func TestUpdatePolicies(t *testing.T) {
 		ChannelId: channelID,
 		Node1Pub:  publicKey,
 		Node1Policy: &lnrpc.RoutingPolicy{
+			FeeBaseMsat:      0,
 			FeeRateMilliMsat: 100,
 			MaxHtlcMsat:      4_600_000_000,
+			TimeLockDelta:    80,
 		},
 	}
 	expectedFeeRatePPM := uint64(108)
@@ -300,9 +334,16 @@ func TestUpdatePolicies(t *testing.T) {
 
 	lndMock.On("ListForwards", ctx, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
 	lndMock.On("GetChanInfo", ctx, channelID).Return(chanInfoResp, nil)
-	lndMock.On("UpdateChannelPolicy", ctx, channelPoint, expectedFeeRatePPM, expectedMaxHTLCMsat).Return(nil)
+	lndMock.On("UpdateChannelPolicy",
+		ctx,
+		channelPoint,
+		uint64(chanInfoResp.Node1Policy.FeeBaseMsat),
+		expectedFeeRatePPM,
+		expectedMaxHTLCMsat,
+		uint64(chanInfoResp.Node1Policy.TimeLockDelta),
+	).Return(nil)
 
-	err := agent.updatePolicies(ctx, localNode)
+	err := agent.UpdatePolicies(ctx, localNode)
 	assert.NoError(t, err)
 }
 

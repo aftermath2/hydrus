@@ -67,7 +67,7 @@ type Agent struct {
 	Keeplist          []string          `yaml:"keeplist"`
 	ChannelManager    ChannelManager    `yaml:"channel_manager"`
 	HeuristicWeights  HeuristicsWeights `yaml:"heuristic_weights"`
-	RoutingPolicies   RoutingPolicies   `yaml:"routing_policies"`
+	Intervals         Intervals         `yaml:"intervals"`
 	AllocationPercent uint64            `yaml:"allocation_percent"`
 	MinBatchSize      uint64            `yaml:"min_batch_size"`
 	MinChannels       uint64            `yaml:"min_channels"`
@@ -131,9 +131,10 @@ type ChannelsWeights struct {
 	BlockHeight    float64 `yaml:"block_height"`
 }
 
-// RoutingPolicies configuration.
-type RoutingPolicies struct {
-	ActivityPeriod time.Duration `yaml:"activity_period"`
+// Intervals configuration.
+type Intervals struct {
+	Channels        time.Duration `yaml:"channels"`
+	RoutingPolicies time.Duration `yaml:"routing_policies"`
 }
 
 // Lightning configuration.
@@ -248,8 +249,12 @@ func (c *Config) Validate() error {
 		return err
 	}
 
-	if c.Agent.RoutingPolicies.ActivityPeriod < time.Hour {
-		return errors.New("routing policies activity period must be longer than an hour")
+	if c.Agent.Intervals.Channels < time.Minute {
+		return errors.New("agent channels interval must be longer than a minute")
+	}
+
+	if c.Agent.Intervals.RoutingPolicies < time.Minute {
+		return errors.New("agent routing policies interval must be longer than a minute")
 	}
 
 	if _, err := credentials.NewClientTLSFromFile(c.Lightning.RPC.TLSCertPath, ""); err != nil {
@@ -314,8 +319,12 @@ func (c *Config) setDefaults() {
 		c.Agent.HeuristicWeights.Close = DefaultCloseWeights
 	}
 
-	if c.Agent.RoutingPolicies.ActivityPeriod == 0 {
-		c.Agent.RoutingPolicies.ActivityPeriod = time.Hour * 24
+	if c.Agent.Intervals == (Intervals{}) {
+		c.Agent.Intervals = Intervals{
+			// One week
+			Channels:        time.Hour * 168,
+			RoutingPolicies: time.Hour * 6,
+		}
 	}
 
 	if c.Lightning.RPC.Timeout == 0 {

@@ -59,7 +59,7 @@ type Client interface {
 	ListForwards(ctx context.Context, startTime, endTime uint64, indexOffset uint32) (*lnrpc.ForwardingHistoryResponse, error)
 	ListPeers(ctx context.Context) ([]*lnrpc.Peer, error)
 	QueryRoute(ctx context.Context, publicKey string) (*lnrpc.QueryRoutesResponse, error)
-	UpdateChannelPolicy(ctx context.Context, channelPoint string, feeRatePPM, maxHTLC uint64) error
+	UpdateChannelPolicy(ctx context.Context, channelPoint string, baseFeeMsat, feeRatePPM, maxHTLCMsat, timeLockDelta uint64) error
 	WalletBalance(ctx context.Context, minConf int32) (*lnrpc.WalletBalanceResponse, error)
 }
 
@@ -337,7 +337,9 @@ func (c *client) QueryRoute(ctx context.Context, publicKey string) (*lnrpc.Query
 }
 
 // UpdateChannelPolicy updates the fee schedule and channel policies for a particular channel.
-func (c *client) UpdateChannelPolicy(ctx context.Context, channelPoint string, feeRatePPM, maxHTLC uint64) error {
+func (c *client) UpdateChannelPolicy(
+	ctx context.Context, channelPoint string, baseFeeMsat, feeRatePPM, maxHTLCMsat, timeLockDelta uint64,
+) error {
 	chanPoint, err := ParseChannelPoint(channelPoint)
 	if err != nil {
 		return err
@@ -347,8 +349,10 @@ func (c *client) UpdateChannelPolicy(ctx context.Context, channelPoint string, f
 		Scope: &lnrpc.PolicyUpdateRequest_ChanPoint{
 			ChanPoint: chanPoint,
 		},
-		FeeRatePpm:  uint32(feeRatePPM),
-		MaxHtlcMsat: maxHTLC,
+		BaseFeeMsat:   int64(baseFeeMsat),
+		FeeRatePpm:    uint32(feeRatePPM),
+		MaxHtlcMsat:   maxHTLCMsat,
+		TimeLockDelta: uint32(timeLockDelta),
 	}
 	resp, err := c.ln.UpdateChannelPolicy(ctx, req)
 	if err != nil {

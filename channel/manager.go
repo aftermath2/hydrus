@@ -28,12 +28,21 @@ type CloseRequest struct {
 	SatvB    uint64
 }
 
+// UpdatePolicyRequest contains the information necessary to update the policy of a channel.
+type UpdatePolicyRequest struct {
+	ChannelPoint  string
+	BaseFeeMsat   uint64
+	FeeRatePPM    uint64
+	MaxHTLCMsat   uint64
+	TimeLockDelta uint64
+}
+
 // Manager handles the opening, closing an re-sizing of channels.
 type Manager interface {
 	Open(ctx context.Context, req OpenRequest) error
 	Close(ctx context.Context, req CloseRequest) error
 	// Splice(channelID uint64, amount int64) error
-	UpdatePolicy(ctx context.Context, channelPoint string, feeRatePPM, maxHTLC uint64) error
+	UpdatePolicy(ctx context.Context, req UpdatePolicyRequest) error
 }
 
 type manager struct {
@@ -140,6 +149,13 @@ func (m *manager) close(ctx context.Context, satvB uint64, channelPoint string, 
 	}
 }
 
-func (m *manager) UpdatePolicy(ctx context.Context, channelPoint string, feeRatePPM, maxHTLC uint64) error {
-	return m.lnd.UpdateChannelPolicy(ctx, channelPoint, feeRatePPM, maxHTLC)
+func (m *manager) UpdatePolicy(ctx context.Context, req UpdatePolicyRequest) error {
+	return m.lnd.UpdateChannelPolicy(
+		ctx,
+		req.ChannelPoint,
+		req.BaseFeeMsat,
+		req.FeeRatePPM,
+		req.MaxHTLCMsat,
+		req.TimeLockDelta,
+	)
 }

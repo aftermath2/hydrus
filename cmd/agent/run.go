@@ -16,7 +16,7 @@ import (
 func NewRunCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "run",
-		Short: "Run the agent, executing actions on intervals",
+		Short: "Run the agent, executing channels and routing policies evaluations on intervals",
 		RunE: cmd.Run(func(ctx context.Context, config *config.Config, lnd lightning.Client, _ logger.Logger) error {
 			agent := agent.New(config.Agent, lnd)
 			return agent.Run(ctx)

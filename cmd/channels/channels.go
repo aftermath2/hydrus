@@ -9,7 +9,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "channels",
 		Short: "Channels operations",
-		Long:  "Perform channels operations such as opening, closing and updating their routing policies",
+		Long:  "Perform channels operations such as opening, closing and updating routing policies",
 	}
 
 	cmd.AddCommand(

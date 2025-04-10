@@ -9,7 +9,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "scores",
 		Short: "Show channels and nodes scores",
-		Long:  "Show scoring information for nodes and channels, providing insights based on different metrics and heuristics.",
+		Long:  "Show scoring information for nodes and channels, providing insights based on different metrics and heuristics",
 	}
 
 	cmd.AddCommand(

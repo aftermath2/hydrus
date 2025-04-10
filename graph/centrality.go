@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"runtime"
 	"sync"
 
 	"golang.org/x/sync/errgroup"
@@ -29,9 +30,8 @@ func getCentrality(ctx context.Context, nodeIndices map[string]int, adjList [][]
 	bCentrality := make([]float64, nodesLen)
 
 	var mu sync.Mutex
-	nGoroutines := min(len(nodeIndices), 100)
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(nGoroutines)
+	g.SetLimit(runtime.NumCPU())
 
 	for _, index := range nodeIndices {
 		g.Go(func() error {

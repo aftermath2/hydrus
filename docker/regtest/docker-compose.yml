@@ -18,7 +18,8 @@ services:
     environment:
       HYDRUS_CONFIG: /etc/hydrus/hydrus.yml
     depends_on:
-      - alice
+      alice:
+        condition: service_healthy
 
   bitcoind:
     build:

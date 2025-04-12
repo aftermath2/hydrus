@@ -89,6 +89,9 @@ Channels routing policies are adjusted based on the channel state (capacity, loc
 
 Apart from this, Hydrus adjusts the maximum HTLC value to 80% of the local balance. It is not set to the exact local balance to leave a buffer of 20% of the funds, in order to avoid running out of liquidity and failing to route payments before the next update.
 
+> [!Note]
+> Base fees, time lock deltas and inbound fees are left unchanged. 
+
 ## Differences with LND's autopilot
 
 - Autopilot only considers a few centrality heuristics to open channels, Hydrus evaluates many more, as we have seen [above](#nodes-selection-algorithm).

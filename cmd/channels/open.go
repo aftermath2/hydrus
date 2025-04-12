@@ -34,7 +34,7 @@ func NewOpenCmd() *cobra.Command {
 				return nil
 			}
 
-			logger.Info("Evaluating channels to close")
+			logger.Info("Evaluating channels to open")
 			agent := agent.New(config.Agent, lnd)
 			return agent.OpenChannels(ctx, localNode)
 		}),

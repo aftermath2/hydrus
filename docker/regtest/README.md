@@ -22,8 +22,6 @@ docker compose up -d
 docker compose stop
 ```
 
-If you use `docker compose down` that will kill the containers and the next time you start the environment all nodes will be assigned different IP addresses and they won't be able to reach each other. To fix this, connect all peers again manually using `lncli connect <pub_key>@<address>:<port>`.
-
 #### Restart hydrus
 
 ```console

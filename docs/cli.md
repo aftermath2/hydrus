@@ -2,7 +2,7 @@
 
 | Name | Description |
 | -- | -- |
-| `agent run` | Run the agent, executing actions on intervals |
+| `agent run` | Run the agent, executing channels and routing policies evaluations on intervals |
 | `channels close` | Evaluate local channels to close and create the closing transactions |
 | `channels open` | Evaluate nodes to connect to and create the funding transaction |
 | `channels updatepolicies` | Evaluate local channels and update their routing policies |
@@ -11,6 +11,6 @@
 
 ## Global flags
 
-| Name | Description |
-| -- | -- |
-| `config` | Path to the configuration file |
+| Name | Type | Description |
+| -- | -- | -- |
+| `config` | string | Path to the configuration file |

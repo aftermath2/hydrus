@@ -16,7 +16,8 @@ services:
     environment:
       HYDRUS_CONFIG: /etc/hydrus/hydrus.yml
     depends_on:
-      - lnd
+      lnd:
+        condition: service_healthy
 
   lnd:
     build:

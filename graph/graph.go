@@ -217,7 +217,7 @@ func discardChannel(routingPolicy *lnrpc.RoutingPolicy) bool {
 	// Attempt to remove outliers. TODO: improve calculating z-score
 	return routingPolicy == nil ||
 		routingPolicy.Disabled ||
-		routingPolicy.FeeRateMilliMsat > 20_000 ||
+		routingPolicy.FeeRateMilliMsat > 10_000 ||
 		routingPolicy.FeeBaseMsat > 100_000
 }
 

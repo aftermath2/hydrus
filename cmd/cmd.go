@@ -29,7 +29,7 @@ func Run(f func(ctx context.Context, config *config.Config, lnd lightning.Client
 			return err
 		}
 
-		logger := logger.New("HYD")
+		logger := logger.New("CMD")
 		return f(cmd.Context(), config, lnd, logger)
 	}
 }

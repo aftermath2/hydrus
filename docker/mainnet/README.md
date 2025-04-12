@@ -9,3 +9,35 @@ Make sure the configuration has `dry-run` enabled:
 ```yml
 agent.dry-run: true
 ```
+
+### Commands
+
+#### Build the environment
+
+```console
+docker compose build
+```
+
+#### Start the environment
+
+```console
+docker compose up -d
+```
+
+#### Stop the environment
+
+```console
+docker compose stop
+```
+
+#### Restart hydrus
+
+```console
+docker restart hydrus
+```
+
+#### Show a hydrus logs
+
+```console
+docker logs -f hydrus
+```

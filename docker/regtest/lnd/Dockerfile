@@ -1,4 +1,4 @@
-ARG LND_VERSION=v0.19.3-beta
+ARG LND_VERSION=v0.20.0-beta
 
 FROM lightninglabs/lnd:${LND_VERSION}
 

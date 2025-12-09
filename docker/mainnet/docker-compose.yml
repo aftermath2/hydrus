@@ -22,7 +22,7 @@ services:
     build:
       context: lnd
       args:
-        LND_VERSION: v0.19.3-beta
+        LND_VERSION: v0.20.0-beta
     image: hydrus/lnd-mainnet
     container_name: lnd
     restart: on-failure:3

@@ -34,14 +34,14 @@ func TestGetCandidateNodes(t *testing.T) {
 			desc: "Two candidates",
 			expectedCandidates: []nodeCandidate{
 				{
-					PublicKey: "bob",
-					Addresses: []string{},
-					Score:     7.167,
-				},
-				{
 					PublicKey: "dave",
 					Addresses: []string{},
-					Score:     7,
+					Score:     6.6,
+				},
+				{
+					PublicKey: "bob",
+					Addresses: []string{},
+					Score:     6.367,
 				},
 			},
 			localNode: local.Node{
@@ -275,11 +275,27 @@ func TestDiscardNode(t *testing.T) {
 		{
 			desc: "Shared peers",
 			localNode: local.Node{
-				ChannelPeers: map[string]struct{}{"alice": {}},
+				ChannelPeers: map[string]struct{}{
+					"alice":  {},
+					"carol":  {},
+					"dave":   {},
+					"erin":   {},
+					"frank":  {},
+					"george": {},
+					"harold": {},
+					"ian":    {},
+					"jane":   {},
+					"kate":   {},
+				},
 			},
 			peerNode: graph.Node{
 				PublicKey: "bob",
-				Channels:  []graph.Channel{{PeerPublicKey: "alice"}},
+				Channels: []graph.Channel{
+					{PeerPublicKey: "alice"},
+					{PeerPublicKey: "carol"},
+					{PeerPublicKey: "dave"},
+					{PeerPublicKey: "erin"},
+				},
 			},
 			discard: true,
 		},

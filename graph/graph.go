@@ -64,7 +64,7 @@ func New(ctx context.Context, openWeights config.OpenWeights, lnd lightning.Clie
 	totalCapacity := uint64(0)
 	nodesLen := len(graph.Nodes)
 	channels := make(map[string][]Channel, nodesLen*2)
-	skippedChannels := 0
+	skippedEdges := 0
 
 	for _, edge := range graph.Edges {
 		totalCapacity += uint64(edge.Capacity)
@@ -72,7 +72,7 @@ func New(ctx context.Context, openWeights config.OpenWeights, lnd lightning.Clie
 		// New channels may be processed by our node before they are propagated entirely.
 		// Skip channels whose complete information isn't yet available to us.
 		if edge.Node1Policy == nil && edge.Node2Policy == nil {
-			skippedChannels++
+			skippedEdges++
 			continue
 		}
 
@@ -87,10 +87,10 @@ func New(ctx context.Context, openWeights config.OpenWeights, lnd lightning.Clie
 		}
 	}
 
-	// Fail if we skipped more than half of the network graph channels
-	if skippedChannels > len(graph.Edges)/2 {
+	// Fail if we skipped more than half of the network graph edges
+	if skippedEdges > len(graph.Edges)/2 {
 		return Graph{},
-			errors.Errorf("channel graph is too incomplete to proceed, skipped %d channels", skippedChannels)
+			errors.Errorf("channel graph is too incomplete to proceed, skipped %d channels", skippedEdges)
 	}
 
 	avgNodeSize := totalCapacity / uint64(nodesLen)
@@ -214,11 +214,11 @@ func GetNumFeatures(features map[uint32]*lnrpc.Feature) int {
 }
 
 func discardChannel(routingPolicy *lnrpc.RoutingPolicy) bool {
-	// Attempt to remove outliers. TODO: improve calculating z-score
+	// Attempt to remove outliers
 	return routingPolicy == nil ||
 		routingPolicy.Disabled ||
-		routingPolicy.FeeRateMilliMsat > 10_000 ||
-		routingPolicy.FeeBaseMsat > 100_000
+		routingPolicy.FeeRateMilliMsat > 5_000 ||
+		routingPolicy.FeeBaseMsat > 50_000
 }
 
 // GetChannelBlockHeight returns the block height at which a channel has been established based on its ID.

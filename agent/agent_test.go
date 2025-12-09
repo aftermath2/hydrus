@@ -329,10 +329,10 @@ func TestUpdatePolicies(t *testing.T) {
 			TimeLockDelta:    80,
 		},
 	}
-	expectedFeeRatePPM := uint64(108)
+	expectedFeeRatePPM := uint64(100)
 	expectedMaxHTLCMsat := uint64(1_970_400_000)
 
-	lndMock.On("ListForwards", ctx, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
+	lndMock.On("ListForwards", ctx, channelID, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
 	lndMock.On("GetChanInfo", ctx, channelID).Return(chanInfoResp, nil)
 	lndMock.On("UpdateChannelPolicy",
 		ctx,
@@ -404,10 +404,11 @@ func TestGetChannelPolicy(t *testing.T) {
 	}
 }
 
-func TestCalcNewFeeRate(t *testing.T) {
+func TestCalculateNewFeeRate(t *testing.T) {
 	tests := []struct {
 		desc               string
 		channel            local.Channel
+		currentBlockHeight uint32
 		feeRatePPM         uint64
 		forwardsAmountIn   uint64
 		forwardsAmountOut  uint64
@@ -419,21 +420,34 @@ func TestCalcNewFeeRate(t *testing.T) {
 				LocalBalance: 9,
 				Capacity:     1_000,
 			},
-			expectedFeeRatePPM: 2_100,
+			expectedFeeRatePPM: 5_000,
 		},
 		{
 			desc: "High local balance",
 			channel: local.Channel{
 				LocalBalance: 995,
 				Capacity:     1_000,
+				BlockHeight:  120,
 			},
+			currentBlockHeight: 1500,
 			expectedFeeRatePPM: 0,
+		},
+		{
+			desc: "High local balance, new channel",
+			channel: local.Channel{
+				LocalBalance: 995,
+				Capacity:     1_000,
+				BlockHeight:  120,
+			},
+			feeRatePPM:         100,
+			currentBlockHeight: 150,
+			expectedFeeRatePPM: 90,
 		},
 		{
 			desc:               "No forwards",
 			feeRatePPM:         50,
 			forwardsAmountOut:  0,
-			expectedFeeRatePPM: 45,
+			expectedFeeRatePPM: 40,
 		},
 		{
 			desc:               "Very low ratio",
@@ -461,7 +475,7 @@ func TestCalcNewFeeRate(t *testing.T) {
 			feeRatePPM:         50,
 			forwardsAmountIn:   1000,
 			forwardsAmountOut:  1700,
-			expectedFeeRatePPM: 56,
+			expectedFeeRatePPM: 60,
 		},
 		{
 			desc:               "Very high ratio",
@@ -474,13 +488,19 @@ func TestCalcNewFeeRate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			result := calcNewFeeRate(tt.channel, tt.feeRatePPM, tt.forwardsAmountIn, tt.forwardsAmountOut)
+			result := calculateNewFeeRate(
+				tt.channel,
+				tt.currentBlockHeight,
+				tt.feeRatePPM,
+				tt.forwardsAmountIn,
+				tt.forwardsAmountOut,
+			)
 			assert.Equal(t, tt.expectedFeeRatePPM, result)
 		})
 	}
 }
 
-func TestCalcNewMaxHTLC(t *testing.T) {
+func TestCalculateNewMaxHTLC(t *testing.T) {
 	tests := []struct {
 		desc           string
 		channel        local.Channel
@@ -518,7 +538,7 @@ func TestCalcNewMaxHTLC(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			result := calcNewMaxHTLC(tt.channel)
+			result := calculateNewMaxHTLC(tt.channel)
 			assert.Equal(t, tt.expectedResult, result)
 		})
 	}
@@ -693,5 +713,5 @@ func getNode(t *testing.T, lndMock *lightning.ClientMock, config config.Agent, s
 	lndMock.On("ListPeers", ctx).Return(peersResp, nil)
 	lndMock.On("ClosedChannels", ctx).Return(closedChannelsResp, nil)
 	lndMock.On("EstimateTxFee", ctx, config.TargetConf).Return(feeResp, nil)
-	lndMock.On("ListForwards", ctx, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
+	lndMock.On("ListForwards", ctx, mock.Anything, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
 }

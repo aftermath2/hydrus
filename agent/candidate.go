@@ -35,7 +35,12 @@ type channelCandidate struct {
 }
 
 // getCandidateNodes returns a ranking with candidates to open a channel to.
-func getCandidateNodes(logger logger.Logger, localNode local.Node, graph graph.Graph, blocklist []string) []nodeCandidate {
+func getCandidateNodes(
+	logger logger.Logger,
+	localNode local.Node,
+	graph graph.Graph,
+	blocklist []string,
+) []nodeCandidate {
 	logger.Info("Getting candidate nodes to open a channel with")
 	candidates := make([]nodeCandidate, 0, len(graph.Nodes))
 
@@ -73,16 +78,17 @@ func discardNode(localNode local.Node, peerNode graph.Node, blocklist []string) 
 	}
 
 	// Count the number of shared channel peers between local and candidate nodes
-	numSharedPeers := 0
+	numSharedPeers := uint64(0)
 	for _, channel := range peerNode.Channels {
 		if _, ok := localNode.ChannelPeers[channel.PeerPublicKey]; ok {
 			numSharedPeers++
 		}
 	}
 
-	// Discard nodes sharing 20% or more peers with us
-	if numSharedPeers > (len(localNode.ChannelPeers)/100)*20 {
-		return fmt.Errorf("sharing %d peers", numSharedPeers)
+	// Discard nodes sharing 30% or more peers with us
+	sharedPeersThreshold := getPercentage(uint64(len(localNode.ChannelPeers)), 30)
+	if len(localNode.ChannelPeers) >= 10 && numSharedPeers > sharedPeersThreshold {
+		return fmt.Errorf("sharing too many channel peers (%d)", numSharedPeers)
 	}
 
 	// Use int32 to avoid overflows setting the number too high
@@ -100,7 +106,8 @@ func discardNode(localNode local.Node, peerNode graph.Node, blocklist []string) 
 		if closedChannel.CloseType == lnrpc.ChannelCloseSummary_FUNDING_CANCELED &&
 			closedChannel.OpenInitiator == lnrpc.Initiator_INITIATOR_LOCAL &&
 			int32(graph.GetChannelBlockHeight(closedChannel.ChanId)) > threeMonthsAgo {
-			return fmt.Errorf("we failed opening a channel with this peer within the last %d blocks", threeMonthsInBlocks)
+			return fmt.Errorf("we failed opening a channel with this peer within the last %d blocks",
+				threeMonthsInBlocks)
 		}
 	}
 

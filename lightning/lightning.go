@@ -56,7 +56,7 @@ type Client interface {
 	GetChanInfo(ctx context.Context, channelID uint64) (*lnrpc.ChannelEdge, error)
 	GetInfo(ctx context.Context) (*lnrpc.GetInfoResponse, error)
 	ListChannels(ctx context.Context) ([]*lnrpc.Channel, error)
-	ListForwards(ctx context.Context, startTime, endTime uint64, indexOffset uint32) (*lnrpc.ForwardingHistoryResponse, error)
+	ListForwards(ctx context.Context, channelID uint64, startTime, endTime uint64, indexOffset uint32) (*lnrpc.ForwardingHistoryResponse, error)
 	ListPeers(ctx context.Context) ([]*lnrpc.Peer, error)
 	QueryRoute(ctx context.Context, publicKey string) (*lnrpc.QueryRoutesResponse, error)
 	UpdateChannelPolicy(ctx context.Context, channelPoint string, baseFeeMsat, feeRatePPM, maxHTLCMsat, timeLockDelta uint64) error
@@ -303,16 +303,24 @@ func (c *client) ListChannels(ctx context.Context) ([]*lnrpc.Channel, error) {
 // ListForwards returns list of successful HTLC forwarding events.
 func (c *client) ListForwards(
 	ctx context.Context,
+	channelID uint64,
 	startTime,
 	endTime uint64,
 	indexOffset uint32,
 ) (*lnrpc.ForwardingHistoryResponse, error) {
+	channelIDs := []uint64{channelID}
+	if channelID == 0 {
+		channelIDs = nil
+	}
+
 	return c.ln.ForwardingHistory(ctx, &lnrpc.ForwardingHistoryRequest{
 		StartTime:       startTime,
 		EndTime:         endTime,
 		IndexOffset:     indexOffset,
 		NumMaxEvents:    MaxForwardingEvents,
 		PeerAliasLookup: false,
+		IncomingChanIds: channelIDs,
+		OutgoingChanIds: channelIDs,
 	})
 }
 

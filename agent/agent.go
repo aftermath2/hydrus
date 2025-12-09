@@ -17,8 +17,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Agent is in charge of looking for new nodes to open channels to, closing channels that are not performing
-// well, and updating the routing policies of the channels that are maintained.
+const (
+	// Minimum fee update change.
+	//
+	// This helps prevent too small fee updates that can cause
+	// FEE_INSUFICIENT errors until they are propagated.
+	minFeePPMUpdate = 10
+	oneWeekInBlocks = 1_008
+)
+
+// Agent is in charge of looking for new nodes to open channels to, closing channels that are not
+// performing well, and updating the routing policies of the channels that are maintained.
 type Agent interface {
 	Run(ctx context.Context) error
 	CloseChannels(ctx context.Context, localNode local.Node) error
@@ -203,6 +212,10 @@ func (a *agent) OpenChannels(ctx context.Context, localNode local.Node) error {
 }
 
 func (a *agent) selectNodes(ctx context.Context, localNode local.Node, candidates []nodeCandidate) map[string]uint64 {
+	if localNode.MaxOpenChannels < 1 {
+		return nil
+	}
+
 	nodes := make(map[string]uint64, localNode.MaxOpenChannels)
 	fundingAmount := min(localNode.AllocatedBalance/localNode.MaxOpenChannels, a.config.MaxChannelSize)
 
@@ -270,16 +283,17 @@ func (a *agent) UpdatePolicies(ctx context.Context, localNode local.Node) error 
 	}
 
 	startTime := uint64(time.Now().Add(-a.config.Intervals.RoutingPolicies).Unix())
-	forwards, err := local.ListForwards(ctx, a.lnd, startTime, 0)
-	if err != nil {
-		return err
-	}
 
 	for _, ch := range localNode.Channels.List {
 		policy, err := getChannelPolicy(ctx, a.lnd, localNode.PublicKey, ch)
 		if err != nil {
 			a.logger.Error(err)
 			continue
+		}
+
+		forwards, err := local.ListForwards(ctx, a.lnd, ch.ID, startTime, 0)
+		if err != nil {
+			return err
 		}
 
 		forwardsAmountIn := uint64(0)
@@ -294,8 +308,14 @@ func (a *agent) UpdatePolicies(ctx context.Context, localNode local.Node) error 
 		}
 
 		feeRatePPM := uint64(policy.FeeRateMilliMsat)
-		newFeeRatePPM := calcNewFeeRate(ch, feeRatePPM, forwardsAmountIn, forwardsAmountOut)
-		newMaxHTLC := calcNewMaxHTLC(ch)
+		newFeeRatePPM := calculateNewFeeRate(
+			ch,
+			localNode.CurrentBlockHeight,
+			feeRatePPM,
+			forwardsAmountIn,
+			forwardsAmountOut,
+		)
+		newMaxHTLC := calculateNewMaxHTLC(ch)
 
 		// No changes required, skip
 		if newFeeRatePPM == feeRatePPM && newMaxHTLC == policy.MaxHtlcMsat {
@@ -345,40 +365,63 @@ func getChannelPolicy(
 	return chanInfo.Node2Policy, nil
 }
 
-func calcNewFeeRate(channel local.Channel, feeRatePPM, forwardsAmountIn, forwardsAmountOut uint64) uint64 {
-	// If the local balance is lower than 1% of the channel's capacity, set a fee of 2100 ppm
-	if channel.LocalBalance < getPercentage(channel.Capacity, 1) {
-		return 2_100
+// calculateNewFeeRate computes the new fee rate based on the channel local balance, forwards in and out.
+func calculateNewFeeRate(
+	channel local.Channel,
+	currentBlockHeight uint32,
+	feeRatePPM,
+	forwardsAmountIn,
+	forwardsAmountOut uint64,
+) uint64 {
+	// If the local balance is lower than 5% of the channel's capacity, set a fee of 5,000 ppm
+	if channel.LocalBalance < getPercentage(channel.Capacity, 5) {
+		return 5_000
 	}
 
-	// If local balance is higher than 99% of the channel capacity, set a fee rate of 0
-	if channel.LocalBalance > getPercentage(channel.Capacity, 99) {
+	// If the local balance is higher than 95% of the channel capacity
+	// and the channel is older than 1 week, set a fee rate of 0
+	channelAge := currentBlockHeight - channel.BlockHeight
+	if channel.LocalBalance > getPercentage(channel.Capacity, 95) && channelAge > oneWeekInBlocks {
 		return 0
 	}
 
-	// If there were no outgoing forwards, decrease the fee rate by 10%
+	// If there were no outgoing forwards, decrease the fee rate
 	if forwardsAmountOut == 0 {
-		return feeRatePPM - getPercentage(feeRatePPM, 10)
+		if feeRatePPM < minFeePPMUpdate {
+			return 0
+		}
+
+		delta := getPercentage(feeRatePPM, 10)
+		delta = max(delta, minFeePPMUpdate)
+		return feeRatePPM - delta
 	}
 
 	ratio := float64(forwardsAmountOut) / float64(forwardsAmountIn+forwardsAmountOut)
 
-	// If more than half of the payments are forwarded in, decrease the outgoing fee rate by delta
-	if ratio < 0.5 {
+	// If more than 60% of the payments are forwarded IN, decrease the fee rate
+	if ratio < 0.4 {
+		if feeRatePPM < minFeePPMUpdate {
+			return feeRatePPM
+		}
+
 		delta := float64(feeRatePPM) * (0.5 - ratio)
+		delta = max(delta, minFeePPMUpdate)
 		return feeRatePPM - uint64(delta)
 	}
 
-	// If more than half of the payments are forwarded out, increase the outgoing fee rate by delta
-	if ratio > 0.5 {
+	// If more than 60% of the payments are forwarded OUT, increase the fee rate
+	if ratio > 0.6 {
 		delta := float64(feeRatePPM) * (ratio - 0.5)
+		delta = max(delta, minFeePPMUpdate)
 		return feeRatePPM + uint64(delta)
 	}
 
+	// If the ratio is between 0.4 and 0.6 (balanced channel), do nothing
 	return feeRatePPM
 }
 
-func calcNewMaxHTLC(channel local.Channel) uint64 {
+// calculateNewMaxHTLC computes 80% of the local channel capacity in millisats.
+func calculateNewMaxHTLC(channel local.Channel) uint64 {
 	if channel.LocalBalance < 2 {
 		return 1_000
 	}

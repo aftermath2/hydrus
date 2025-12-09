@@ -61,12 +61,13 @@ func TestGetNode(t *testing.T) {
 			walletResp := &lnrpc.WalletBalanceResponse{
 				ConfirmedBalance: tt.balance,
 			}
+			channelID := uint64(191315023298560)
 			channelsResp := []*lnrpc.Channel{
 				{
 					Active:       true,
 					RemotePubkey: "test_peer",
 					ChannelPoint: "e5b8ccc43b4eea6e2664a843e27d82c6d71d2885e7aef73777dd35c737c1d7bc:1",
-					ChanId:       191315023298560,
+					ChanId:       channelID,
 					Capacity:     2_000_000,
 				},
 			}
@@ -83,7 +84,7 @@ func TestGetNode(t *testing.T) {
 			forwardsResp := &lnrpc.ForwardingHistoryResponse{
 				ForwardingEvents: []*lnrpc.ForwardingEvent{
 					{
-						ChanIdIn:  191315023298560,
+						ChanIdIn:  channelID,
 						AmtInMsat: 500,
 						FeeMsat:   10,
 					},
@@ -98,7 +99,7 @@ func TestGetNode(t *testing.T) {
 			lndMock.On("ListPeers", ctx).Return(peersResp, nil)
 			lndMock.On("ClosedChannels", ctx).Return(closedChannelsResp, nil)
 			lndMock.On("EstimateTxFee", ctx, config.TargetConf).Return(feeResp, nil)
-			lndMock.On("ListForwards", ctx, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
+			lndMock.On("ListForwards", ctx, uint64(0), mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
 
 			expectedNode := local.Node{
 				PublicKey: infoResp.IdentityPubkey,

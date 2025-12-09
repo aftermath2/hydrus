@@ -64,7 +64,8 @@ func TestGetChannels(t *testing.T) {
 		},
 		LastOffsetIndex: 3,
 	}
-	lndMock.On("ListForwards", ctx, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
+
+	lndMock.On("ListForwards", ctx, uint64(0), mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
 
 	weights := config.CloseWeights{
 		Capacity:       0.2,
@@ -160,7 +161,7 @@ func TestListForwards(t *testing.T) {
 	lndMock := lightning.NewClientMock()
 	startTime := uint64(0)
 	offset := uint32(0)
-	events := make([]*lnrpc.ForwardingEvent, 0)
+	channelID := uint64(1)
 	expectedEvents := []*lnrpc.ForwardingEvent{
 		{Timestamp: 1},
 		{Timestamp: 2},
@@ -170,9 +171,9 @@ func TestListForwards(t *testing.T) {
 		LastOffsetIndex:  uint32(len(expectedEvents)),
 	}
 
-	lndMock.On("ListForwards", ctx, startTime, mock.Anything, offset).Return(resp, nil)
+	lndMock.On("ListForwards", ctx, channelID, startTime, mock.Anything, offset).Return(resp, nil)
 
-	events, err := ListForwards(ctx, lndMock, startTime, offset)
+	events, err := ListForwards(ctx, lndMock, channelID, startTime, offset)
 	assert.NoError(t, err)
 
 	assert.Equal(t, expectedEvents, events)
@@ -183,8 +184,8 @@ func TestListForwardsRecursion(t *testing.T) {
 	lndMock := lightning.NewClientMock()
 	startTime := uint64(0)
 	offset := uint32(0)
+	channelID := uint64(1)
 
-	events := make([]*lnrpc.ForwardingEvent, 0, lightning.MaxForwardingEvents)
 	expectedEvents := make([]*lnrpc.ForwardingEvent, lightning.MaxForwardingEvents)
 
 	for i := range lightning.MaxForwardingEvents {
@@ -202,10 +203,16 @@ func TestListForwardsRecursion(t *testing.T) {
 		LastOffsetIndex: uint32(len(expectedEvents) + 2),
 	}
 
-	lndMock.On("ListForwards", ctx, startTime, mock.Anything, uint32(0)).Return(resp1, nil).Once()
-	lndMock.On("ListForwards", ctx, startTime, mock.Anything, uint32(lightning.MaxForwardingEvents)).Return(resp2, nil).Once()
+	lndMock.On("ListForwards", ctx, channelID, startTime, mock.Anything, uint32(0)).Return(resp1, nil).Once()
+	lndMock.On("ListForwards",
+		ctx,
+		channelID,
+		startTime,
+		mock.Anything,
+		uint32(lightning.MaxForwardingEvents),
+	).Return(resp2, nil).Once()
 
-	events, err := ListForwards(ctx, lndMock, startTime, offset)
+	events, err := ListForwards(ctx, lndMock, channelID, startTime, offset)
 	assert.NoError(t, err)
 
 	assert.Equal(t, append(resp1.ForwardingEvents, resp2.ForwardingEvents...), events)

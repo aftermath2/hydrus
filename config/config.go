@@ -30,9 +30,9 @@ var (
 		},
 		Channels: ChannelsWeights{
 			BaseFee:        1,
-			FeeRate:        0.7,
-			InboundBaseFee: 0.8,
-			InboundFeeRate: 0.7,
+			FeeRate:        0.4,
+			InboundBaseFee: 0.4,
+			InboundFeeRate: 0.4,
 			MinHTLC:        1,
 			MaxHTLC:        0.6,
 			BlockHeight:    0.8,
@@ -276,7 +276,7 @@ func (c *Config) Validate() error {
 
 func (c *Config) setDefaults() {
 	if c.Agent.AllocationPercent == 0 {
-		c.Agent.AllocationPercent = 60
+		c.Agent.AllocationPercent = 80
 	}
 
 	if c.Agent.MinChannels == 0 {
@@ -308,7 +308,7 @@ func (c *Config) setDefaults() {
 	}
 
 	if c.Agent.ChannelManager.FeeRatePPM == 0 {
-		c.Agent.ChannelManager.FeeRatePPM = 100
+		c.Agent.ChannelManager.FeeRatePPM = 2_000
 	}
 
 	if c.Agent.HeuristicWeights.Open == (OpenWeights{}) {
@@ -346,16 +346,16 @@ func IterWeights[T Weights](weights T, f func(weight float64) error) error {
 	var err error
 	w := reflect.ValueOf(weights)
 	for i := range w.NumField() {
-		weight := w.Field(i).Interface()
-		switch weight.(type) {
+		field := w.Field(i).Interface()
+		switch weight := field.(type) {
 		case float64:
-			err = f(weight.(float64))
+			err = f(weight)
 		case CentralityWeights:
-			err = IterWeights(weight.(CentralityWeights), func(v float64) error {
+			err = IterWeights(weight, func(v float64) error {
 				return f(v)
 			})
 		case ChannelsWeights:
-			err = IterWeights(weight.(ChannelsWeights), func(v float64) error {
+			err = IterWeights(weight, func(v float64) error {
 				return f(v)
 			})
 		}

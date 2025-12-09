@@ -148,14 +148,14 @@ func TestSetDefaults(t *testing.T) {
 	config := &Config{}
 	config.setDefaults()
 
-	assert.Equal(t, uint64(60), config.Agent.AllocationPercent)
+	assert.Equal(t, uint64(80), config.Agent.AllocationPercent)
 	assert.Equal(t, uint64(2), config.Agent.MinChannels)
 	assert.Equal(t, uint64(200), config.Agent.MaxChannels)
 	assert.Equal(t, int32(6), config.Agent.TargetConf)
 	assert.Equal(t, uint64(1_000_000), config.Agent.MinChannelSize)
 	assert.Equal(t, uint64(10_000_000), config.Agent.MaxChannelSize)
 	assert.Equal(t, int32(2), config.Agent.ChannelManager.MinConf, 2)
-	assert.Equal(t, uint64(100), config.Agent.ChannelManager.FeeRatePPM)
+	assert.Equal(t, uint64(2_000), config.Agent.ChannelManager.FeeRatePPM)
 	assert.Equal(t, uint64(50), config.Agent.ChannelManager.MaxSatvB)
 	assert.Equal(t, DefaultOpenWeights, config.Agent.HeuristicWeights.Open)
 	assert.Equal(t, DefaultCloseWeights, config.Agent.HeuristicWeights.Close)

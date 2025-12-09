@@ -28,21 +28,21 @@ agent:
   heuristic_weights:
     open:
       capacity: 1
-      features: 0.6
+      features: 0
       hybrid: 1
       centrality:
-        degree: 0.4
+        degree: 0
         closeness: 1
         betweenness: 1
-        eigenvector: 1
+        eigenvector: 0
       channels:
-        base_fee: 0.8
-        fee_rate: 0.8
-        inbound_base_fee: 0.8
-        inbound_fee_rate: 0.8
+        base_fee: 0
+        fee_rate: 0
+        inbound_base_fee: 0
+        inbound_fee_rate: 0
         min_htlc: 1
         max_htlc: 0.5
-        block_height: 1
+        block_height: 0.6
     close:
       capacity: 0.9
       active: 1

@@ -93,11 +93,12 @@ func (c *ClientMock) ListChannels(ctx context.Context) ([]*lnrpc.Channel, error)
 // ListForwards mock.
 func (c *ClientMock) ListForwards(
 	ctx context.Context,
+	channelID uint64,
 	startTime,
 	endTime uint64,
 	indexOffset uint32,
 ) (*lnrpc.ForwardingHistoryResponse, error) {
-	args := c.Called(ctx, startTime, endTime, indexOffset)
+	args := c.Called(ctx, channelID, startTime, endTime, indexOffset)
 	return mockReturn[*lnrpc.ForwardingHistoryResponse](args)
 }
 

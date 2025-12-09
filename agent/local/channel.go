@@ -48,7 +48,7 @@ func getChannels(
 	peers []*lnrpc.Peer,
 ) (Channels, error) {
 	oneMonthAgo := uint64(time.Now().Add(-oneMonth).Unix())
-	forwards, err := ListForwards(ctx, lnd, oneMonthAgo, 0)
+	forwards, err := ListForwards(ctx, lnd, 0, oneMonthAgo, 0)
 	if err != nil {
 		return Channels{}, err
 	}
@@ -90,6 +90,7 @@ func getChannels(
 func ListForwards(
 	ctx context.Context,
 	lnd lightning.Client,
+	channelID uint64,
 	startTime uint64,
 	offset uint32,
 ) ([]*lnrpc.ForwardingEvent, error) {
@@ -97,7 +98,7 @@ func ListForwards(
 	now := uint64(time.Now().Unix())
 
 	for {
-		forwards, err := lnd.ListForwards(ctx, startTime, now, offset)
+		forwards, err := lnd.ListForwards(ctx, channelID, startTime, now, offset)
 		if err != nil {
 			return nil, err
 		}

@@ -10,6 +10,14 @@ Make sure the configuration has `dry-run` enabled:
 agent.dry_run: true
 ```
 
+### Setup
+
+The first time the enviroment is spun out, the LND wallet must be initialized to start the daemon. For that, execute:
+
+```console
+lncli --tlscertpath /home/lnd/.lnd/tls.cert create
+```
+
 ### Commands
 
 #### Build the environment

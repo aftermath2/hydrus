@@ -65,7 +65,9 @@ func TestGetChannels(t *testing.T) {
 		LastOffsetIndex: 3,
 	}
 
-	lndMock.On("ListForwards", ctx, uint64(0), mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
+	lndMock.On("ListForwards", ctx, ch1.ChanId, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil).Once()
+	lndMock.On("ListForwards", ctx, ch2.ChanId, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil).Once()
+	lndMock.On("ListForwards", ctx, ch3.ChanId, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil).Once()
 
 	weights := config.CloseWeights{
 		Capacity:       0.2,

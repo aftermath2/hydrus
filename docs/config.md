@@ -19,16 +19,17 @@ lncli bakemacaroon --save_to hydrus.macaroon \
 	uri:/lnrpc.Lightning/ClosedChannels \
 	uri:/lnrpc.Lightning/ConnectPeer \
 	uri:/lnrpc.Lightning/DescribeGraph \
-	uri:/walletrpc.WalletKit/EstimateTxFee \
+	uri:/walletrpc.WalletKit/EstimateFee \
 	uri:/routerrpc.Router/EstimateRouteFee \
 	uri:/lnrpc.Lightning/GetChanInfo \
 	uri:/lnrpc.Lightning/GetInfo \
 	uri:/lnrpc.Lightning/ListChannels \
-	uri:/lnrpc.Lightning/ListForwards \
+	uri:/lnrpc.Lightning/ForwardingHistory \
 	uri:/lnrpc.Lightning/ListPeers \
-	uri:/lnrpc.Lightning/QueryRoute \
+	uri:/lnrpc.Lightning/QueryRoutes \
 	uri:/lnrpc.Lightning/UpdateChannelPolicy \
-	uri:/lnrpc.Lightning/WalletBalance
+	uri:/lnrpc.Lightning/WalletBalance \
+	uri:/autopilotrpc.Autopilot/ModifyStatus
 ```
 
 > [!Note]

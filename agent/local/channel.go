@@ -9,11 +9,11 @@ import (
 	"github.com/aftermath2/hydrus/lightning"
 
 	"github.com/lightningnetwork/lnd/lnrpc"
-	"github.com/lightningnetwork/lnd/lnwire"
 )
 
 const (
 	oneDay   = time.Hour * 24
+	oneWeek  = oneDay * 7
 	oneMonth = oneDay * 30
 )
 
@@ -48,6 +48,10 @@ func getChannels(
 	peers []*lnrpc.Peer,
 ) (Channels, error) {
 	oneMonthAgo := uint64(time.Now().Add(-oneMonth).Unix())
+	forwards, err := ListForwards(ctx, lnd, oneMonthAgo)
+	if err != nil {
+		return Channels{}, err
+	}
 
 	heuristics := NewHeuristics(closeWeights)
 	chans := make([]Channel, 0, len(channels))
@@ -55,11 +59,6 @@ func getChannels(
 		if channel.Private {
 			// Do not close private channels
 			continue
-		}
-
-		forwards, err := ListForwards(ctx, lnd, channel.ChanId, oneMonthAgo, 0)
-		if err != nil {
-			return Channels{}, err
 		}
 
 		numForwards, forwardsAmount, fees := getForwardsInfo(channel, forwards)
@@ -91,17 +90,14 @@ func getChannels(
 func ListForwards(
 	ctx context.Context,
 	lnd lightning.Client,
-	channelID uint64,
 	startTime uint64,
-	offset uint32,
 ) ([]*lnrpc.ForwardingEvent, error) {
 	events := make([]*lnrpc.ForwardingEvent, 0)
 	now := uint64(time.Now().Unix())
-
-	scid := lnwire.NewShortChanIDFromInt(channelID).ToUint64()
+	offset := uint32(0)
 
 	for {
-		forwards, err := lnd.ListForwards(ctx, scid, startTime, now, offset)
+		forwards, err := lnd.ListForwards(ctx, startTime, now, offset)
 		if err != nil {
 			return nil, err
 		}
@@ -122,9 +118,7 @@ func ListForwards(
 func getForwardsInfo(channel *lnrpc.Channel, forwards []*lnrpc.ForwardingEvent) (uint64, uint64, uint64) {
 	var numForwards, forwardsAmount, fees uint64
 	for _, forward := range forwards {
-		scid := lnwire.NewShortChanIDFromInt(channel.ChanId).ToUint64()
-
-		if forward.ChanIdIn == scid {
+		if forward.ChanIdIn == channel.ChanId {
 			numForwards++
 			forwardsAmount += forward.AmtInMsat
 			// Even though we collect fees in the other part of the circuit, we are counting fees for this
@@ -132,7 +126,7 @@ func getForwardsInfo(channel *lnrpc.Channel, forwards []*lnrpc.ForwardingEvent) 
 			fees += forward.FeeMsat
 		}
 
-		if forward.ChanIdOut == scid {
+		if forward.ChanIdOut == channel.ChanId {
 			numForwards++
 			forwardsAmount += forward.AmtOutMsat
 			fees += forward.FeeMsat

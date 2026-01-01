@@ -332,7 +332,7 @@ func TestUpdatePolicies(t *testing.T) {
 	expectedFeeRatePPM := uint64(100)
 	expectedMaxHTLCMsat := uint64(1_970_400_000)
 
-	lndMock.On("ListForwards", ctx, channelID, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
+	lndMock.On("ListForwards", ctx, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
 	lndMock.On("GetChanInfo", ctx, channelID).Return(chanInfoResp, nil)
 	lndMock.On("UpdateChannelPolicy",
 		ctx,
@@ -713,5 +713,5 @@ func getNode(t *testing.T, lndMock *lightning.ClientMock, config config.Agent, s
 	lndMock.On("ListPeers", ctx).Return(peersResp, nil)
 	lndMock.On("ClosedChannels", ctx).Return(closedChannelsResp, nil)
 	lndMock.On("EstimateTxFee", ctx, config.TargetConf).Return(feeResp, nil)
-	lndMock.On("ListForwards", ctx, mock.Anything, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
+	lndMock.On("ListForwards", ctx, mock.Anything, mock.Anything, uint32(0)).Return(forwardsResp, nil)
 }

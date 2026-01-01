@@ -283,17 +283,16 @@ func (a *agent) UpdatePolicies(ctx context.Context, localNode local.Node) error 
 	}
 
 	startTime := uint64(time.Now().Add(-a.config.Intervals.RoutingPolicies).Unix())
+	forwards, err := local.ListForwards(ctx, a.lnd, startTime)
+	if err != nil {
+		return err
+	}
 
 	for _, ch := range localNode.Channels.List {
 		policy, err := getChannelPolicy(ctx, a.lnd, localNode.PublicKey, ch)
 		if err != nil {
 			a.logger.Error(err)
 			continue
-		}
-
-		forwards, err := local.ListForwards(ctx, a.lnd, ch.ID, startTime, 0)
-		if err != nil {
-			return err
 		}
 
 		forwardsAmountIn := uint64(0)
